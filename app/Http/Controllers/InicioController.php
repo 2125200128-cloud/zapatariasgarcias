@@ -9,6 +9,6 @@ class InicioController extends Controller
     //
     public function inicio()
     {
-        return view('/plantilla/base');
+        return view('/inicio');
     }
 }
