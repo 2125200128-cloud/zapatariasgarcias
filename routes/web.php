@@ -61,4 +61,3 @@ Route::get('/inventario/formulario', [InventarioController::class, 'formulario']
 //----------------------------------->INICIO
 Route::get('/', [InicioController::class, 'inicio']);
 
-
