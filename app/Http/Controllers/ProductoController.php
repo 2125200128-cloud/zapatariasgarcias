@@ -11,4 +11,12 @@ class ProductoController extends Controller
     {
         return view('producto/inicio');
     }
+
+    public function formulario(){
+        return view('producto/formulario');
+    }
+
+    public function editar(){
+        return view('producto/editar');
+    }
 }

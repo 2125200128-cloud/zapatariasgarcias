@@ -39,6 +39,7 @@ Route::get('/pedido/formulario', [PedidoController::class, 'formulario']);
 //------------------------------------->PRODUCTO
 Route::get('/producto', [ProductoController::class, 'inicio']);
 Route::get('/producto/formulario', [ProductoController::class, 'formulario']);
+Route::get('/producto/editar', [ProductoController::class, 'editar']);
 //------------------------------------->SUCURSAL
 Route::get('/sucursal', [SucursalController::class, 'inicio']);
 Route::get('/sucursal/formulario', [SucursalController::class, 'formulario']);
