@@ -6,6 +6,8 @@ use Illuminate\Database\Eloquent\Model;
 
 class Sucursal extends Model
 {
+    protected $table = 'sucursales';
+
     protected $fillable = [
         'empleado_id',
         'nombre',
@@ -17,6 +19,8 @@ class Sucursal extends Model
         'imagen',
         'estatus'
     ];
+
+    public $timestamps = false;
 
 
 

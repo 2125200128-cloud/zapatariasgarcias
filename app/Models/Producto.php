@@ -24,6 +24,8 @@ class Producto extends Model
         'imagen3'
     ];
 
+    public $timestamps = false;
+
 
     public function marca()
     {

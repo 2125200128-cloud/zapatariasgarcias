@@ -16,6 +16,8 @@ class Trayecto extends Model
         'estatus'
     ];
 
+    public $timestamps = false;
+
     public function chofer()
     {
         return $this->belongsTo(Chofer::class);
@@ -29,5 +31,15 @@ class Trayecto extends Model
     public function carro()
     {
         return $this->belongsTo(Carro::class);
+    }
+
+    public function ubicaciones()
+    {
+        return $this->hasMany(TrayectoUbicacion::class);
+    }
+
+    public function ubicacionActual()
+    {
+        return $this->hasOne(TrayectoUbicacion::class)->latestOfMany('registrado_en');
     }
 }

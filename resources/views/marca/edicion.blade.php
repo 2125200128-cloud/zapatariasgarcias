@@ -2,7 +2,36 @@
 
 @section('dinamico')
 
-         
-<h1>EDICIÓN DE LAS MARCAS</h1>
+<h1 class="text-2xl font-semibold text-gray-800 mb-4">Editar marca</h1>
+
+<div class="bg-white rounded-lg shadow p-6 max-w-3xl">
+    <form action="{{ url('/marca/actualizar/' . $marca->id) }}" method="POST" enctype="multipart/form-data" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        @csrf
+
+        <div>
+            <label for="nombre" class="block text-sm font-medium text-gray-700 mb-1">Nombre</label>
+            <input type="text" name="nombre" id="nombre" value="{{ $marca->nombre }}" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+        </div>
+
+        <div>
+            <label for="proveedor_id" class="block text-sm font-medium text-gray-700 mb-1">Proveedor</label>
+            <select name="proveedor_id" id="proveedor_id" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                <option value="">-- Selecciona --</option>
+                @foreach ($proveedores ?? [] as $proveedor)
+                    <option value="{{ $proveedor->id }}" @selected($marca->proveedor_id == $proveedor->id)>{{ $proveedor->nombre }}</option>
+                @endforeach
+            </select>
+        </div>
+
+        <div class="sm:col-span-2">
+            <label for="imagen" class="block text-sm font-medium text-gray-700 mb-1">Imagen</label>
+            <input type="file" name="imagen" id="imagen" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
+        </div>
+
+        <div class="sm:col-span-2">
+            <button type="submit" class="bg-blue-600 text-white px-5 py-2 rounded-lg text-sm hover:bg-blue-700">Guardar cambios</button>
+        </div>
+    </form>
+</div>
 
 @endsection

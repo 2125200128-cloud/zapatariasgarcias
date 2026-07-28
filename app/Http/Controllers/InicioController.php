@@ -16,17 +16,8 @@ class InicioController extends Controller
     public function inicio()
     {
 
-    // $empleados = Empleado::count();
-    // $clientes = Cliente::count();
-    // $productos = Producto::count();
-    // $pedidos = Pedido::count();
 
-    // return view('inicio', compact(
-    //     'empleados',
-    //     'clientes',
-    //     'productos',
-    //     'pedidos'
-    // ));
-         return view('/inicio');
+    
+            return view('/inicio');
     }
 }

@@ -15,6 +15,8 @@ class Pedido extends Model
         'estatus'
     ];
 
+    public $timestamps = false;
+
     public function empleado()
     {
         return $this->belongsTo(Empleado::class);

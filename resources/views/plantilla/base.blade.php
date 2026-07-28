@@ -57,18 +57,19 @@
 
         <div class="h-full px-3 pb-4 overflow-y-auto bg-white">
             <ul class="space-y-2 font-medium">
-                <li><a href="/" class="flex items-center p-2 rounded-lg hover:bg-gray-100">Inicio</a></li>
-                <li><a href="/empleado" class="flex items-center p-2 rounded-lg hover:bg-gray-100">Empleados</a></li>
-                <li><a href="/cliente" class="flex items-center p-2 rounded-lg hover:bg-gray-100">Clientes</a></li>
-                <li><a href="/pedido" class="flex items-center p-2 rounded-lg hover:bg-gray-100">Pedidos</a></li>
-                <li><a href="/producto" class="flex items-center p-2 rounded-lg hover:bg-gray-100">Productos</a></li>
-                <li><a href="/proveedor" class="flex items-center p-2 rounded-lg hover:bg-gray-100">Proveedores</a></li>
-                <li><a href="/sucursal" class="flex items-center p-2 rounded-lg hover:bg-gray-100">Sucursales</a></li>
-                <li><a href="/carro" class="flex items-center p-2 rounded-lg hover:bg-gray-100">Carros</a></li>
-                <li><a href="/chofer" class="flex items-center p-2 rounded-lg hover:bg-gray-100">Choferes</a></li>
-                <li><a href="/trayecto" class="flex items-center p-2 rounded-lg hover:bg-gray-100">Trayectos</a></li>
-                <li><a href="/inventario" class="flex items-center p-2 rounded-lg hover:bg-gray-100">Inventario</a></li>
-                <li><a href="/marca" class="flex items-center p-2 rounded-lg hover:bg-gray-100">Marcas</a></li>
+                <li><a href="{{ url('/') }}" class="flex items-center p-2 rounded-lg hover:bg-gray-100">Inicio</a></li>
+                <li><a href="{{ url('/empleado') }}" class="flex items-center p-2 rounded-lg hover:bg-gray-100">Empleados</a></li>
+                <li><a href="{{ url('/pedido') }}" class="flex items-center p-2 rounded-lg hover:bg-gray-100">Pedidos</a></li>
+                <li><a href="{{ url('/producto') }}" class="flex items-center p-2 rounded-lg hover:bg-gray-100">Productos</a></li>
+                <li><a href="{{ url('/proveedor') }}" class="flex items-center p-2 rounded-lg hover:bg-gray-100">Proveedores</a></li>
+                <li><a href="{{ url('/sucursal') }}" class="flex items-center p-2 rounded-lg hover:bg-gray-100">Sucursales</a></li>
+                <li><a href="{{ url('/carro') }}" class="flex items-center p-2 rounded-lg hover:bg-gray-100">Carros</a></li>
+                <li><a href="{{ url('/chofer') }}" class="flex items-center p-2 rounded-lg hover:bg-gray-100">Choferes</a></li>
+                <li><a href="{{ url('/trayecto') }}" class="flex items-center p-2 rounded-lg hover:bg-gray-100">Trayectos</a></li>
+                <li><a href="{{ url('/trayecto/lista') }}" class="flex items-center p-2 rounded-lg hover:bg-gray-100 pl-6 text-sm text-gray-600">— Lista de trayectos</a></li>
+                <li><a href="{{ url('/trayecto/flota') }}" class="flex items-center p-2 rounded-lg hover:bg-gray-100 pl-6 text-sm text-gray-600">— Mapa de flota</a></li>
+                <li><a href="{{ url('/inventario') }}" class="flex items-center p-2 rounded-lg hover:bg-gray-100">Inventario</a></li>
+                <li><a href="{{ url('/marca') }}" class="flex items-center p-2 rounded-lg hover:bg-gray-100">Marcas</a></li>
             </ul>
         </div>
     </aside>
