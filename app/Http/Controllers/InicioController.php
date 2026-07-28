@@ -29,4 +29,10 @@ class InicioController extends Controller
     // ));
          return view('/inicio');
     }
+
+     public function login(){
+
+        return view('/login/inicio');
+
+     }
 }
