@@ -15,6 +15,8 @@ class Detalle_pedido extends Model
         'precio'
     ];
 
+    public $timestamps = false;
+
     public function pedido()
     {
         return $this->belongsTo(Pedido::class);

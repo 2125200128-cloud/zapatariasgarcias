@@ -14,6 +14,8 @@ class Marca extends Model
         'imagen'
     ];
 
+    public $timestamps = false;
+
     public function proveedor()
     {
         return $this->belongsTo(Proveedor::class);

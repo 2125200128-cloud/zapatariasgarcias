@@ -11,7 +11,9 @@ class ClienteController extends Controller
     //
     public function inicio()
     {
-        return view('cliente/inicio');
+        $clientes = Cliente::all();
+
+        return view('cliente/inicio', compact('clientes'));
     }
 
     public function formulario()
@@ -49,11 +51,15 @@ class ClienteController extends Controller
         $cliente->apellido_paterno = $request->input('apellido_paterno');
         $cliente->correo = $request->input('correo');
         $cliente->telefono = $request->input('telefono');
-        $cliente->contrasena = $request->input('contrasena');
+        if ($request->filled('contrasena')) {
+            $cliente->contrasena = $request->input('contrasena');
+        }
         $cliente->estatus = $request->input('estatus');
         $cliente->usuario = $request->input('usuario');
-        $cliente->direccion = $request->input('direccion');
-        $cliente->imagen = $request->input('imagen');
+        $cliente->calle = $request->input('calle');
+        $cliente->numero = $request->input('numero');
+        $cliente->municipio = $request->input('municipio');
+        $cliente->codigo_postal = $request->input('codigo_postal');
         $cliente->save();
 
         if ($request->hasFile('imagen')) {
@@ -79,8 +85,11 @@ class ClienteController extends Controller
         $cliente->contrasena = $request->input('contrasena');
         $cliente->estatus = $request->input('estatus');
         $cliente->usuario = $request->input('usuario');
-        $cliente->direccion = $request->input('direccion');
-        $cliente->imagen = $request->input('imagen');
+        $cliente->calle = $request->input('calle');
+        $cliente->numero = $request->input('numero');
+        $cliente->municipio = $request->input('municipio');
+        $cliente->codigo_postal = $request->input('codigo_postal');
+        $cliente->imagen = 'sin-imagen.jpg';
 
         $cliente->save();
         if ($request->hasFile('imagen')) {

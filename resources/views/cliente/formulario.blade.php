@@ -2,10 +2,10 @@
 
 @section('dinamico')
 
-<h1 class="text-2xl font-semibold text-gray-800 mb-4">Nuevo empleado</h1>
+<h1 class="text-2xl font-semibold text-gray-800 mb-4">Nuevo cliente</h1>
 
 <div class="bg-white rounded-lg shadow p-6 max-w-3xl">
-    <form action="{{ url('/empleado/guardar') }}" method="POST" enctype="multipart/form-data" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+    <form action="{{ url('/cliente/guardar') }}" method="POST" enctype="multipart/form-data" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
         @csrf
 
         <div>
@@ -41,15 +41,6 @@
         <div>
             <label for="contrasena" class="block text-sm font-medium text-gray-700 mb-1">Contraseña</label>
             <input type="password" name="contrasena" id="contrasena" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" required>
-        </div>
-
-        <div>
-            <label for="rol" class="block text-sm font-medium text-gray-700 mb-1">Rol</label>
-            <select name="rol" id="rol" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-                <option value="Usuario">Usuario</option>
-                <option value="Administrador">Administrador</option>
-                <option value="Sucursal_encargado">Sucursal_encargado</option>
-            </select>
         </div>
 
         <div>

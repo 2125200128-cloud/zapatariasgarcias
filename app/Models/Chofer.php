@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class Chofer extends Model
 {
     //
+    protected $table = 'choferes';
 
     protected $fillable = [
         'nombre',
@@ -15,6 +16,8 @@ class Chofer extends Model
         'imagen',
         'estatus'
     ];
+
+    public $timestamps = false;
 
         public function trayectos()
     {
