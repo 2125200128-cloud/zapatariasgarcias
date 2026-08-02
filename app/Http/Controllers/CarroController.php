@@ -7,10 +7,11 @@ use App\Models\Carro;
 
 class CarroController extends Controller
 {
-    //
     public function inicio()
     {
-        $carros = Carro::all();
+        $carros = Carro::with(['trayectos' => function ($query) {
+            $query->whereNotIn('estatus', ['Entregado', 'Cancelado'])->with('chofer');
+        }])->get();
 
         return view('carro/inicio', compact('carros'));
     }

@@ -3,43 +3,73 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use App\Models\Inventario;
 use App\Models\Sucursal;
 use App\Models\Producto;
 
 class InventarioController extends Controller
 {
-    //
+    // El inventario es cosa de la matriz (Administrador o el Encargado de la
+    // matriz) — una sucursal no registra ni edita inventario, el suyo se
+    // abona solo al confirmar la llegada de un trayecto.
+    private function puedeAsignar()
+    {
+        $empleado = Auth::guard('empleado')->user();
+        return $empleado->esAdministrador() || $empleado->esMatriz();
+    }
+
     public function inicio()
     {
-        $inventarios = Inventario::with(['sucursal', 'producto'])->get();
+        $query = Inventario::with(['sucursal', 'producto.marca']);
+
+        // La matriz ve todo; una sucursal solo ve su propio stock (de solo
+        // lectura — registrar/editar sigue siendo exclusivo de la matriz).
+        if (!$this->puedeAsignar()) {
+            $miSucursal = Auth::guard('empleado')->user()->miSucursal();
+            $query->where('sucursal_id', optional($miSucursal)->id ?? 0);
+        }
+
+        $inventarios = $query->get();
 
         return view('inventario/inicio', compact('inventarios'));
     }
 
     public function formulario()
     {
+        if (!$this->puedeAsignar()) {
+            abort(403, 'El inventario solo lo gestiona la matriz.');
+        }
+
         $sucursales = Sucursal::all();
-        $productos = Producto::all();
+        $productos = Producto::with('marca')->get();
 
         return view('inventario/formulario', compact('sucursales', 'productos'));
     }
 
     public function editar(Request $request)
     {
+        if (!$this->puedeAsignar()) {
+            abort(403, 'El inventario solo lo gestiona la matriz.');
+        }
+
         $id = $request->route('id');
         $inventario = Inventario::find($id);
         if (!$inventario) {
             return redirect('/inventario')->with('error', 'Registro no encontrado');
         }
         $sucursales = Sucursal::all();
-        $productos = Producto::all();
+        $productos = Producto::with('marca')->get();
 
         return view('inventario/edicion', compact('inventario', 'sucursales', 'productos'));
     }
 
     public function actualizar(Request $request)
     {
+        if (!$this->puedeAsignar()) {
+            abort(403, 'El inventario solo lo gestiona la matriz.');
+        }
+
         $id = $request->route('id');
         $inventario = Inventario::find($id);
         if (!$inventario) {
@@ -56,6 +86,10 @@ class InventarioController extends Controller
 
     public function guardar(Request $request)
     {
+        if (!$this->puedeAsignar()) {
+            abort(403, 'El inventario solo lo gestiona la matriz.');
+        }
+
         $inventario = new Inventario();
         $inventario->sucursal_id = $request->input('sucursal_id');
         $inventario->producto_id = $request->input('producto_id');
@@ -68,6 +102,10 @@ class InventarioController extends Controller
 
     public function eliminar(Request $request)
     {
+        if (!$this->puedeAsignar()) {
+            abort(403, 'El inventario solo lo gestiona la matriz.');
+        }
+
         $id = $request->route('id');
         $inventario = Inventario::find($id);
         if (!$inventario) {
@@ -79,6 +117,10 @@ class InventarioController extends Controller
 
     public function mostrar(Request $request)
     {
+        if (!$this->puedeAsignar()) {
+            abort(403, 'El inventario solo lo gestiona la matriz.');
+        }
+
         $id = $request->route('id');
         $inventario = Inventario::find($id);
         if (!$inventario) {

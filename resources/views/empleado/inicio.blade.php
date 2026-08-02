@@ -13,6 +13,7 @@
     <table class="min-w-full text-sm text-left">
         <thead class="bg-gray-50 text-gray-600 uppercase text-xs">
             <tr>
+                <th class="px-4 py-3">Imagen</th>
                 <th class="px-4 py-3">ID</th>
                 <th class="px-4 py-3">Nombre</th>
                 <th class="px-4 py-3">Apellido paterno</th>
@@ -29,6 +30,11 @@
         <tbody class="divide-y divide-gray-100">
             @forelse ($empleados ?? [] as $empleado)
                 <tr>
+                    <td class="px-4 py-3">
+                        <div class="w-10 h-10 rounded bg-gray-100 overflow-hidden flex items-center justify-center">
+                            <img src="{{ $empleado->imagen }}" class="w-full h-full object-cover" onerror="this.remove()">
+                        </div>
+                    </td>
                     <td class="px-4 py-3">{{ $empleado->id }}</td>
                     <td class="px-4 py-3">{{ $empleado->nombre }}</td>
                     <td class="px-4 py-3">{{ $empleado->apellido_paterno }}</td>
@@ -46,7 +52,7 @@
                 </tr>
             @empty
                 <tr>
-                    <td colspan="11" class="px-4 py-6 text-center text-gray-500">No hay empleados registrados.</td>
+                    <td colspan="12" class="px-4 py-6 text-center text-gray-500">No hay empleados registrados.</td>
                 </tr>
             @endforelse
         </tbody>

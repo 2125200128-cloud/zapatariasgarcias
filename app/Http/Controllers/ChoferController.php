@@ -7,10 +7,11 @@ use App\Models\Chofer;
 
 class ChoferController extends Controller
 {
-    //
     public function inicio()
     {
-        $choferes = Chofer::all();
+        $choferes = Chofer::with(['trayectos' => function ($query) {
+            $query->whereNotIn('estatus', ['Entregado', 'Cancelado'])->with('carro');
+        }])->get();
 
         return view('chofer/inicio', compact('choferes'));
     }

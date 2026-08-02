@@ -6,7 +6,6 @@ use Illuminate\Database\Eloquent\Model;
 
 class Inventario extends Model
 {
-    //
     protected $table = 'inventarios';
 
     protected $fillable = [
@@ -16,6 +15,8 @@ class Inventario extends Model
         'estatus',
         'stock'
     ];
+
+    public $timestamps = false;
 
     public function sucursal()
     {

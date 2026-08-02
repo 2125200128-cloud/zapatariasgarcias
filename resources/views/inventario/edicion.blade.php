@@ -20,10 +20,16 @@
 
         <div>
             <label for="producto_id" class="block text-sm font-medium text-gray-700 mb-1">Producto</label>
-            <select name="producto_id" id="producto_id" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+            <input type="text" id="productoBuscar" placeholder="Buscar por nombre, marca o talla..."
+                class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mb-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <select name="producto_id" id="producto_id" size="8"
+                class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" required>
                 <option value="">-- Selecciona --</option>
                 @foreach ($productos ?? [] as $producto)
-                    <option value="{{ $producto->id }}" @selected($inventario->producto_id == $producto->id)>{{ $producto->nombre }}</option>
+                    <option value="{{ $producto->id }}" @selected($inventario->producto_id == $producto->id)
+                        data-buscar="{{ strtolower($producto->nombre . ' ' . ($producto->marca->nombre ?? '') . ' ' . $producto->talla) }}">
+                        {{ $producto->nombre }} — {{ $producto->marca->nombre ?? 'Sin marca' }} (talla {{ $producto->talla }})
+                    </option>
                 @endforeach
             </select>
         </div>
@@ -46,5 +52,22 @@
         </div>
     </form>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const buscador = document.getElementById('productoBuscar');
+    const select = document.getElementById('producto_id');
+
+    buscador.addEventListener('input', () => {
+        const termino = buscador.value.trim().toLowerCase();
+        Array.from(select.options).forEach(opcion => {
+            if (!opcion.value) {
+                return;
+            }
+            opcion.style.display = opcion.dataset.buscar.includes(termino) ? '' : 'none';
+        });
+    });
+});
+</script>
 
 @endsection

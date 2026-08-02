@@ -9,34 +9,91 @@
 </head>
 <body class="bg-gray-100 min-h-screen flex items-center justify-center p-4">
 
-    <div class="bg-white rounded-lg shadow p-6 w-full max-w-sm text-center">
-        <h1 class="text-xl font-semibold mb-1">Trayecto #{{ $trayecto->id }}</h1>
-        <p class="text-gray-500 mb-4">Pedido #{{ $trayecto->pedido_id }} — {{ $trayecto->estatus }}</p>
+    <div class="bg-white rounded-lg shadow p-6 w-full max-w-sm">
+        <h1 class="text-xl font-semibold mb-1 text-center">Trayecto #{{ $trayecto->id }}</h1>
+        <p class="text-gray-500 mb-4 text-center">Pedido #{{ $trayecto->pedido_id }} — {{ $trayecto->estatus }}</p>
 
-        <button id="btnCompartir"
-            class="w-full bg-blue-600 text-white font-medium py-3 rounded-lg hover:bg-blue-700">
-            Compartir mi ubicación
-        </button>
+        @if ($yaTermino)
+            <p class="text-sm text-gray-600 text-center">
+                Este trayecto ya está <strong>{{ $trayecto->estatus }}</strong> — ya no se puede compartir ubicación.
+            </p>
+        @else
+            <div id="avisoInseguro" class="hidden bg-amber-50 border border-amber-200 rounded-lg p-3 mb-4 text-xs text-amber-800">
+                Tu navegador está bloqueando la ubicación porque esta página no se abrió por HTTPS (ni es
+                "localhost"). Los celulares no comparten el GPS en conexiones sin HTTPS — hay que abrir este link
+                desde una dirección https:// para que funcione.
+            </div>
 
-        <p id="estadoTexto" class="text-sm text-gray-500 mt-4">
-            Toca el botón para empezar a enviar tu ubicación mientras haces la entrega.
-        </p>
+            <div class="bg-gray-50 border border-gray-200 rounded-lg p-3 mb-4 text-xs text-gray-600 space-y-2">
+                <p class="font-semibold text-gray-700">Aviso de privacidad simplificado</p>
+                <p>
+                    Zapatería Hermanos García recaba tu ubicación GPS en tiempo real únicamente mientras este
+                    trayecto esté activo, con el fin de dar seguimiento a la entrega en curso y compartirla con
+                    el personal autorizado de la matriz y la sucursal destino. No se comparte con terceros ajenos
+                    a la empresa, y se deja de recabar en cuanto el trayecto se marca como entregado o cancelado.
+                </p>
+                <p>
+                    Tienes derecho a acceder, rectificar, cancelar u oponerte (derechos ARCO) al uso de tu
+                    ubicación, conforme a la Ley Federal de Protección de Datos Personales en Posesión de los
+                    Particulares. Para ejercerlos, contacta a tu encargado de matriz.
+                </p>
+            </div>
+
+            <label class="flex items-start gap-2 mb-4 text-sm text-gray-700">
+                <input type="checkbox" id="aceptoAviso" class="mt-0.5">
+                He leído y acepto el aviso de privacidad.
+            </label>
+
+            <button id="btnCompartir" disabled
+                class="w-full bg-gray-300 text-white font-medium py-3 rounded-lg cursor-not-allowed transition-colors">
+                Compartir mi ubicación
+            </button>
+
+            <p id="estadoTexto" class="text-sm text-gray-500 mt-4 text-center">
+                Marca la casilla de arriba para poder compartir tu ubicación mientras haces la entrega.
+            </p>
+        @endif
     </div>
 
     <script>
     document.addEventListener("DOMContentLoaded", () => {
-        const trayectoId = {{ $trayecto->id }};
-        const baseUrl = '{{ url('/') }}';
+        const urlUbicacion = @json($urlUbicacion ?? null);
         const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
+        const checkbox = document.getElementById('aceptoAviso');
         const btn = document.getElementById('btnCompartir');
         const estado = document.getElementById('estadoTexto');
+        const avisoInseguro = document.getElementById('avisoInseguro');
+
+        if (!btn) {
+            return;
+        }
+
+        // Los navegadores solo dan acceso al GPS en HTTPS (o en "localhost").
+        // Se avisa esto de una vez, en vez de dejar que el botón falle en
+        // silencio sin explicar por qué.
+        if (!window.isSecureContext) {
+            avisoInseguro.classList.remove('hidden');
+            checkbox.disabled = true;
+            estado.textContent = 'No se puede compartir ubicación desde esta conexión (falta HTTPS).';
+        }
 
         const INTERVALO_MINIMO_MS = 8000;
         let ultimoEnvio = 0;
         let watchId = null;
 
+        checkbox.addEventListener('change', () => {
+            btn.disabled = !checkbox.checked;
+            btn.classList.toggle('bg-gray-300', !checkbox.checked);
+            btn.classList.toggle('cursor-not-allowed', !checkbox.checked);
+            btn.classList.toggle('bg-blue-600', checkbox.checked);
+            btn.classList.toggle('hover:bg-blue-700', checkbox.checked);
+            if (checkbox.checked) {
+                estado.textContent = 'Toca el botón para empezar a enviar tu ubicación mientras haces la entrega.';
+            }
+        });
+
         function enviarPosicion(lat, lng) {
-            fetch(`${baseUrl}/trayecto/${trayectoId}/ubicacion`, {
+            fetch(urlUbicacion, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -55,6 +112,10 @@
         }
 
         function iniciarCompartir() {
+            if (!checkbox.checked) {
+                return;
+            }
+
             if (!navigator.geolocation) {
                 estado.textContent = 'Este dispositivo no soporta geolocalización.';
                 return;
@@ -74,7 +135,13 @@
                     }
                 },
                 (error) => {
-                    estado.textContent = 'No se pudo obtener tu ubicación: ' + error.message;
+                    if (error.code === error.PERMISSION_DENIED) {
+                        estado.textContent = window.isSecureContext
+                            ? 'Permiso de ubicación denegado. Revisa los permisos del sitio en tu navegador.'
+                            : 'El navegador bloqueó el GPS porque esta conexión no es HTTPS.';
+                    } else {
+                        estado.textContent = 'No se pudo obtener tu ubicación: ' + error.message;
+                    }
                 },
                 { enableHighAccuracy: true, maximumAge: 5000, timeout: 15000 }
             );

@@ -6,13 +6,12 @@ use Illuminate\Database\Eloquent\Model;
 
 class Trayecto extends Model
 {
-    //
     protected $fillable = [
         'chofer_id',
         'carro_id',
         'pedido_id',
         'fecha_envio',
-        'descripcion',
+        'descripcion_ruta',
         'estatus'
     ];
 

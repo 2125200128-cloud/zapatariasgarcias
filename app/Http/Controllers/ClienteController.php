@@ -5,10 +5,8 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Cliente;
 
-
 class ClienteController extends Controller
 {
-    //
     public function inicio()
     {
         $clientes = Cliente::all();
@@ -19,13 +17,6 @@ class ClienteController extends Controller
     public function formulario()
     {
         return view('cliente/formulario');
-    }
-
-    public function listado()
-    {
-        $clientes = Cliente::all();
-
-        return view('cliente/lista', compact('clientes'));
     }
 
     public function editar(Request $request)
@@ -75,7 +66,6 @@ class ClienteController extends Controller
 
     public function guardar(Request $request)
     {
-        //dd($request->all());
         $cliente = new Cliente();
         $cliente->nombre = $request->input('nombre');
         $cliente->apellido_materno = $request->input('apellido_materno');

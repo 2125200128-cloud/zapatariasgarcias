@@ -46,9 +46,9 @@
         <div>
             <label for="rol" class="block text-sm font-medium text-gray-700 mb-1">Rol</label>
             <select name="rol" id="rol" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-                <option value="Usuario">Usuario</option>
+                <option value="Empleado">Empleado</option>
                 <option value="Administrador">Administrador</option>
-                <option value="Sucursal_encargado">Sucursal_encargado</option>
+                <option value="Encargado">Encargado</option>
             </select>
         </div>
 

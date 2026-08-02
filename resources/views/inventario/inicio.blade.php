@@ -2,11 +2,18 @@
 
 @section('dinamico')
 
+@php
+    $empleadoInventario = Auth::guard('empleado')->user();
+    $puedeGestionarInventario = $empleadoInventario->esAdministrador() || $empleadoInventario->esMatriz();
+@endphp
+
 <div class="flex items-center justify-between mb-4">
     <h1 class="text-2xl font-semibold text-gray-800">Inventario</h1>
-    <a href="{{ url('/inventario/formulario') }}" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-700">
-        Nuevo registro de inventario
-    </a>
+    @if ($puedeGestionarInventario)
+        <a href="{{ url('/inventario/formulario') }}" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-700">
+            Nuevo registro de inventario
+        </a>
+    @endif
 </div>
 
 <div class="bg-white rounded-lg shadow overflow-x-auto">
@@ -18,7 +25,9 @@
                 <th class="px-4 py-3">Producto</th>
                 <th class="px-4 py-3">Stock</th>
                 <th class="px-4 py-3">Estatus</th>
-                <th class="px-4 py-3">Acciones</th>
+                @if ($puedeGestionarInventario)
+                    <th class="px-4 py-3">Acciones</th>
+                @endif
             </tr>
         </thead>
         <tbody class="divide-y divide-gray-100">
@@ -26,13 +35,22 @@
                 <tr>
                     <td class="px-4 py-3">{{ $inventario->id }}</td>
                     <td class="px-4 py-3">{{ $inventario->sucursal->nombre ?? '—' }}</td>
-                    <td class="px-4 py-3">{{ $inventario->producto->nombre ?? '—' }}</td>
+                    <td class="px-4 py-3">
+                        @if ($inventario->producto)
+                            {{ $inventario->producto->nombre }} — {{ $inventario->producto->marca->nombre ?? 'Sin marca' }}
+                            (talla {{ $inventario->producto->talla }})
+                        @else
+                            —
+                        @endif
+                    </td>
                     <td class="px-4 py-3">{{ $inventario->stock }}</td>
                     <td class="px-4 py-3">{{ $inventario->estatus }}</td>
-                    <td class="px-4 py-3 whitespace-nowrap space-x-2">
-                        <a href="{{ url('/inventario/editar/' . $inventario->id) }}" class="text-blue-600 hover:underline">Editar</a>
-                        <a href="{{ url('/inventario/mostrar/' . $inventario->id) }}" class="text-red-600 hover:underline">Eliminar</a>
-                    </td>
+                    @if ($puedeGestionarInventario)
+                        <td class="px-4 py-3 whitespace-nowrap space-x-2">
+                            <a href="{{ url('/inventario/editar/' . $inventario->id) }}" class="text-blue-600 hover:underline">Editar</a>
+                            <a href="{{ url('/inventario/mostrar/' . $inventario->id) }}" class="text-red-600 hover:underline">Eliminar</a>
+                        </td>
+                    @endif
                 </tr>
             @empty
                 <tr>

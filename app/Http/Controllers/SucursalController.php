@@ -8,7 +8,6 @@ use App\Models\Empleado;
 
 class SucursalController extends Controller
 {
-    //
     public function inicio()
     {
         $sucursales = Sucursal::with('empleado')->get();

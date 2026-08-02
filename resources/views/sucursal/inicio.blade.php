@@ -13,6 +13,7 @@
     <table class="min-w-full text-sm text-left">
         <thead class="bg-gray-50 text-gray-600 uppercase text-xs">
             <tr>
+                <th class="px-4 py-3">Imagen</th>
                 <th class="px-4 py-3">ID</th>
                 <th class="px-4 py-3">Nombre</th>
                 <th class="px-4 py-3">Municipio</th>
@@ -25,6 +26,11 @@
         <tbody class="divide-y divide-gray-100">
             @forelse ($sucursales ?? [] as $sucursal)
                 <tr>
+                    <td class="px-4 py-3">
+                        <div class="w-10 h-10 rounded bg-gray-100 overflow-hidden flex items-center justify-center">
+                            <img src="{{ $sucursal->imagen }}" class="w-full h-full object-cover" onerror="this.remove()">
+                        </div>
+                    </td>
                     <td class="px-4 py-3">{{ $sucursal->id }}</td>
                     <td class="px-4 py-3">{{ $sucursal->nombre }}</td>
                     <td class="px-4 py-3">{{ $sucursal->municipio }}</td>
@@ -38,7 +44,7 @@
                 </tr>
             @empty
                 <tr>
-                    <td colspan="7" class="px-4 py-6 text-center text-gray-500">No hay sucursales registradas.</td>
+                    <td colspan="8" class="px-4 py-6 text-center text-gray-500">No hay sucursales registradas.</td>
                 </tr>
             @endforelse
         </tbody>

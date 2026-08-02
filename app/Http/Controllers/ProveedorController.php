@@ -3,11 +3,11 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use App\Models\Proveedor;
 
 class ProveedorController extends Controller
 {
-    //
     public function inicio()
     {
         $proveedores = Proveedor::all();
@@ -30,6 +30,32 @@ class ProveedorController extends Controller
         return view('proveedor/edicion', ['proveedor' => $proveedor]);
     }
 
+    // Reglas compartidas por guardar()/actualizar(). 'contacto' es un
+    // teléfono a 10 dígitos (así está en la BD, columna varchar(10)); sin
+    // esta validación, un nombre de contacto o un teléfono con guiones
+    // truena la app con un error de MySQL sin control.
+    private function reglas($idProveedor = null)
+    {
+        return [
+            'nombre' => 'required|string|max:100',
+            'contacto' => 'required|digits:10',
+            'correo' => ['required', 'email', 'max:150', Rule::unique('proveedores', 'correo')->ignore($idProveedor)],
+            'calle' => 'required|string|max:255',
+            'numero' => 'required|integer',
+            'municipio' => 'required|string|max:100',
+            'codigo_postal' => 'required|string|max:5',
+            'estatus' => 'required|in:Activo,Inactivo',
+        ];
+    }
+
+    private function mensajes()
+    {
+        return [
+            'contacto.digits' => 'El contacto debe ser un teléfono a 10 dígitos, sin espacios ni guiones.',
+            'correo.unique' => 'Ya existe un proveedor registrado con ese correo.',
+        ];
+    }
+
     public function actualizar(Request $request)
     {
         $id = $request->route('id');
@@ -37,6 +63,9 @@ class ProveedorController extends Controller
         if (!$proveedor) {
             return redirect('/proveedor')->with('error', 'Proveedor no encontrado');
         }
+
+        $request->validate($this->reglas($id), $this->mensajes());
+
         $proveedor->nombre = $request->input('nombre');
         $proveedor->contacto = $request->input('contacto');
         $proveedor->correo = $request->input('correo');
@@ -60,6 +89,8 @@ class ProveedorController extends Controller
 
     public function guardar(Request $request)
     {
+        $request->validate($this->reglas(), $this->mensajes());
+
         $proveedor = new Proveedor();
         $proveedor->nombre = $request->input('nombre');
         $proveedor->contacto = $request->input('contacto');

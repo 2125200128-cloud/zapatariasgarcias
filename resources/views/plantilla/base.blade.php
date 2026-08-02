@@ -37,13 +37,20 @@
                 </button>
                 <div class="hidden z-50 my-4 text-base list-none bg-white divide-y divide-gray-100 rounded-lg shadow"
                     id="dropdown-user">
+                    @php
+                        $empleadoActual = Auth::guard('empleado')->user();
+                    @endphp
                     <div class="px-4 py-3">
-                        <p class="text-sm font-semibold">Administrador</p>
-                        <p class="text-sm text-gray-500">admin@zapateria.com</p>
+                        <p class="text-sm font-semibold">{{ $empleadoActual->nombre }} {{ $empleadoActual->apellido_paterno }}</p>
+                        <p class="text-sm text-gray-500">{{ $empleadoActual->usuario }} · {{ $empleadoActual->rol }}</p>
                     </div>
                     <ul class="py-2">
-                        <li><a href="#" class="block px-4 py-2 hover:bg-gray-100">Perfil</a></li>
-                        <li><a href="#" class="block px-4 py-2 hover:bg-gray-100">Cerrar sesión</a></li>
+                        <li>
+                            <form action="{{ url('/logout') }}" method="POST">
+                                @csrf
+                                <button type="submit" class="block w-full text-left px-4 py-2 hover:bg-gray-100">Cerrar sesión</button>
+                            </form>
+                        </li>
                     </ul>
                 </div>
             </div>
@@ -56,20 +63,32 @@
         class="fixed top-0 left-0 z-40 w-64 h-screen pt-20 transition-transform -translate-x-full bg-white border-r border-gray-200">
 
         <div class="h-full px-3 pb-4 overflow-y-auto bg-white">
+            @php
+                $empleadoSidebar = Auth::guard('empleado')->user();
+                $puedeAsignar = $empleadoSidebar->esAdministrador() || $empleadoSidebar->esMatriz();
+            @endphp
             <ul class="space-y-2 font-medium">
                 <li><a href="{{ url('/') }}" class="flex items-center p-2 rounded-lg hover:bg-gray-100">Inicio</a></li>
-                <li><a href="{{ url('/empleado') }}" class="flex items-center p-2 rounded-lg hover:bg-gray-100">Empleados</a></li>
+                @if ($empleadoSidebar->esAdministrador())
+                    <li><a href="{{ url('/empleado') }}" class="flex items-center p-2 rounded-lg hover:bg-gray-100">Empleados</a></li>
+                @endif
                 <li><a href="{{ url('/pedido') }}" class="flex items-center p-2 rounded-lg hover:bg-gray-100">Pedidos</a></li>
-                <li><a href="{{ url('/producto') }}" class="flex items-center p-2 rounded-lg hover:bg-gray-100">Productos</a></li>
-                <li><a href="{{ url('/proveedor') }}" class="flex items-center p-2 rounded-lg hover:bg-gray-100">Proveedores</a></li>
-                <li><a href="{{ url('/sucursal') }}" class="flex items-center p-2 rounded-lg hover:bg-gray-100">Sucursales</a></li>
-                <li><a href="{{ url('/carro') }}" class="flex items-center p-2 rounded-lg hover:bg-gray-100">Carros</a></li>
-                <li><a href="{{ url('/chofer') }}" class="flex items-center p-2 rounded-lg hover:bg-gray-100">Choferes</a></li>
-                <li><a href="{{ url('/trayecto') }}" class="flex items-center p-2 rounded-lg hover:bg-gray-100">Trayectos</a></li>
-                <li><a href="{{ url('/trayecto/lista') }}" class="flex items-center p-2 rounded-lg hover:bg-gray-100 pl-6 text-sm text-gray-600">— Lista de trayectos</a></li>
-                <li><a href="{{ url('/trayecto/flota') }}" class="flex items-center p-2 rounded-lg hover:bg-gray-100 pl-6 text-sm text-gray-600">— Mapa de flota</a></li>
+                @if ($puedeAsignar)
+                    <li><a href="{{ url('/pedido/pendientes') }}" class="flex items-center p-2 pl-4 ml-3 border-l-2 border-gray-200 rounded-lg hover:bg-gray-100 hover:border-gray-300 text-sm text-gray-600">Pendientes de aceptar</a></li>
+                @endif
+                @if ($empleadoSidebar->esAdministrador())
+                    <li><a href="{{ url('/producto') }}" class="flex items-center p-2 rounded-lg hover:bg-gray-100">Productos</a></li>
+                    <li><a href="{{ url('/proveedor') }}" class="flex items-center p-2 rounded-lg hover:bg-gray-100">Proveedores</a></li>
+                    <li><a href="{{ url('/sucursal') }}" class="flex items-center p-2 rounded-lg hover:bg-gray-100">Sucursales</a></li>
+                    <li><a href="{{ url('/carro') }}" class="flex items-center p-2 rounded-lg hover:bg-gray-100">Carros</a></li>
+                    <li><a href="{{ url('/chofer') }}" class="flex items-center p-2 rounded-lg hover:bg-gray-100">Choferes</a></li>
+                @endif
+                <li><a href="{{ url('/trayecto/lista') }}" class="flex items-center p-2 rounded-lg hover:bg-gray-100">Trayectos</a></li>
+                <li><a href="{{ url('/trayecto/flota') }}" class="flex items-center p-2 pl-4 ml-3 border-l-2 border-gray-200 rounded-lg hover:bg-gray-100 hover:border-gray-300 text-sm text-gray-600">Mapa de flota</a></li>
                 <li><a href="{{ url('/inventario') }}" class="flex items-center p-2 rounded-lg hover:bg-gray-100">Inventario</a></li>
-                <li><a href="{{ url('/marca') }}" class="flex items-center p-2 rounded-lg hover:bg-gray-100">Marcas</a></li>
+                @if ($empleadoSidebar->esAdministrador())
+                    <li><a href="{{ url('/marca') }}" class="flex items-center p-2 rounded-lg hover:bg-gray-100">Marcas</a></li>
+                @endif
             </ul>
         </div>
     </aside>

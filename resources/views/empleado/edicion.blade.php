@@ -46,9 +46,9 @@
         <div>
             <label for="rol" class="block text-sm font-medium text-gray-700 mb-1">Rol</label>
             <select name="rol" id="rol" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-                <option value="Usuario" @selected($empleado->rol === 'Usuario')>Usuario</option>
+                <option value="Empleado" @selected($empleado->rol === 'Empleado')>Empleado</option>
                 <option value="Administrador" @selected($empleado->rol === 'Administrador')>Administrador</option>
-                <option value="Sucursal_encargado" @selected($empleado->rol === 'Sucursal_encargado')>Sucursal_encargado</option>
+                <option value="Encargado" @selected($empleado->rol === 'Encargado')>Encargado</option>
             </select>
         </div>
 

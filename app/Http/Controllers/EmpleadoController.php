@@ -3,11 +3,11 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
 use App\Models\Empleado;
 
 class EmpleadoController extends Controller
 {
-    //
     public function inicio()
     {
         $empleados = Empleado::all();
@@ -44,7 +44,7 @@ class EmpleadoController extends Controller
         $empleado->correo = $request->input('correo');
         $empleado->usuario = $request->input('usuario');
         if ($request->filled('contrasena')) {
-            $empleado->contrasena = $request->input('contrasena');
+            $empleado->contrasena = Hash::make($request->input('contrasena'));
         }
         $empleado->rol = $request->input('rol');
         $empleado->estatus = $request->input('estatus');
@@ -74,7 +74,7 @@ class EmpleadoController extends Controller
         $empleado->telefono = $request->input('telefono');
         $empleado->correo = $request->input('correo');
         $empleado->usuario = $request->input('usuario');
-        $empleado->contrasena = $request->input('contrasena');
+        $empleado->contrasena = Hash::make($request->input('contrasena'));
         $empleado->rol = $request->input('rol');
         $empleado->estatus = $request->input('estatus');
         $empleado->calle = $request->input('calle');

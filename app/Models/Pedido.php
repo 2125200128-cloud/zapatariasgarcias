@@ -6,10 +6,8 @@ use Illuminate\Database\Eloquent\Model;
 
 class Pedido extends Model
 {
-    //
 
     protected $fillable = [
-        'imagen',
         'empleado_id',
         'fecha',
         'estatus'

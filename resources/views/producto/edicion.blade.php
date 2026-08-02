@@ -5,6 +5,12 @@
 <h1 class="text-2xl font-semibold text-gray-800 mb-4">Editar producto</h1>
 
 <div class="bg-white rounded-lg shadow p-6 max-w-3xl">
+    <p class="text-xs text-gray-500 mb-4">
+        Nombre, descripción, marca, proveedor, precio, modelo, color, sexo y categoría son datos del modelo de
+        zapato — se actualizan en <strong>todas sus tallas</strong>, no solo en la {{ $producto->talla }}.
+        Talla y estatus son de esta fila únicamente.
+    </p>
+
     <form action="{{ url('/producto/actualizar/' . $producto->id) }}" method="POST" enctype="multipart/form-data" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
         @csrf
 
@@ -62,8 +68,18 @@
         </div>
 
         <div>
-            <label for="categoria" class="block text-sm font-medium text-gray-700 mb-1">Categoría</label>
-            <input type="text" name="categoria" id="categoria" value="{{ $producto->categoria }}" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <div class="flex items-center justify-between mb-1">
+                <label for="categoria_select" class="block text-sm font-medium text-gray-700">Categoría</label>
+                <button type="button" id="toggleNuevaCategoria" class="text-xs text-blue-600 hover:underline">+ Nueva categoría</button>
+            </div>
+            <select name="categoria" id="categoria_select" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <option value="">-- Selecciona --</option>
+                @foreach ($categorias ?? [] as $cat)
+                    <option value="{{ $cat }}" @selected($producto->categoria === $cat)>{{ $cat }}</option>
+                @endforeach
+            </select>
+            <input type="text" name="categoria" id="categoria_nueva" placeholder="Escribe la nueva categoría" disabled
+                class="hidden w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
         </div>
 
         <div>
@@ -99,5 +115,28 @@
         </div>
     </form>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const selectCategoria = document.getElementById('categoria_select');
+    const inputCategoria = document.getElementById('categoria_nueva');
+    const toggleCategoria = document.getElementById('toggleNuevaCategoria');
+
+    function modoNuevaCategoria(activar) {
+        selectCategoria.disabled = activar;
+        selectCategoria.classList.toggle('hidden', activar);
+        inputCategoria.disabled = !activar;
+        inputCategoria.classList.toggle('hidden', !activar);
+        toggleCategoria.textContent = activar ? 'Elegir de la lista' : '+ Nueva categoría';
+        if (activar) {
+            inputCategoria.focus();
+        }
+    }
+
+    toggleCategoria.addEventListener('click', () => {
+        modoNuevaCategoria(inputCategoria.classList.contains('hidden'));
+    });
+});
+</script>
 
 @endsection

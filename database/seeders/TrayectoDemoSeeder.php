@@ -136,7 +136,7 @@ class TrayectoDemoSeeder extends Seeder
                 'telefono' => str_pad($datos['lada'] . $contador, 10, '0', STR_PAD_RIGHT),
                 'contrasena' => bcrypt('demo1234'),
                 'usuario' => 'encargado.' . $datos['slug'],
-                'rol' => 'Sucursal_encargado',
+                'rol' => 'Encargado',
                 'estatus' => 'Activo',
                 'calle' => 'Av. Principal',
                 'numero' => 100 * $contador,
@@ -177,52 +177,50 @@ class TrayectoDemoSeeder extends Seeder
         // ---- Pedidos (uno por sucursal, con su detalle) ----
         $pedidos = [];
         foreach ($sucursales as $municipio => $sucursal) {
-            $pedido = new Pedido([
+            $pedido = Pedido::create([
                 'empleado_id' => $sucursal->empleado_id,
                 'estatus' => 'Realizado',
-                'imagen' => 'demo/pedido_' . $sucursal->id . '.jpg',
             ]);
-            $pedido->save();
 
             foreach (array_slice($productos, 0, 2) as $producto) {
-                $detalle = new Detalle_pedido([
+                Detalle_pedido::create([
                     'pedido_id' => $pedido->id,
                     'producto_id' => $producto->id,
                     'precio' => $producto->precio,
+                    'cantidad_solicitada' => random_int(6, 20),
                 ]);
-                // 'cantidad_solicitada' es el nombre real de la columna; el
-                // modelo declara 'cantidad' en $fillable (bug preexistente),
-                // por eso se asigna directo en vez de mass-assignment.
-                $detalle->cantidad_solicitada = random_int(6, 20);
-                $detalle->save();
             }
 
             $pedidos[$municipio] = $pedido;
         }
 
         // ---- Trayectos: distintos estatus para ver el mapa de flota variado ----
+        // Solo hay 3 choferes/carros, así que como mucho 3 trayectos pueden
+        // estar "activos" (Pendiente/Aceptado/En ruta) al mismo tiempo sin
+        // que se repita chofer o carro — un mismo chofer/carro sí puede
+        // repetirse, pero solo en trayectos ya terminados (Entregado /
+        // Cancelado), nunca en dos activos a la vez.
         $trayectosData = [
             ['municipio' => 'Zapopan', 'chofer' => 0, 'carro' => 0, 'estatus' => 'En ruta'],
             ['municipio' => 'Ciudad Guzmán', 'chofer' => 1, 'carro' => 1, 'estatus' => 'En ruta'],
             ['municipio' => 'Puerto Vallarta', 'chofer' => 2, 'carro' => 2, 'estatus' => 'Aceptado'],
-            ['municipio' => 'Lagos de Moreno', 'chofer' => 0, 'carro' => 1, 'estatus' => 'Pendiente'],
-            ['municipio' => 'San Juan de los Lagos', 'chofer' => 1, 'carro' => 2, 'estatus' => 'Entregado'],
+            // Viajes ya terminados que reutilizan chofer/carro de arriba —
+            // válido porque no coinciden en el tiempo con los activos.
+            ['municipio' => 'Lagos de Moreno', 'chofer' => 0, 'carro' => 0, 'estatus' => 'Entregado'],
+            ['municipio' => 'San Juan de los Lagos', 'chofer' => 1, 'carro' => 1, 'estatus' => 'Cancelado'],
         ];
 
         $matriz = config('ubicaciones.matriz');
         $municipiosCoords = config('ubicaciones.municipios');
 
         foreach ($trayectosData as $datos) {
-            $trayecto = new Trayecto([
+            $trayecto = Trayecto::create([
                 'chofer_id' => $choferes[$datos['chofer']]->id,
                 'carro_id' => $carros[$datos['carro']]->id,
                 'pedido_id' => $pedidos[$datos['municipio']]->id,
                 'estatus' => $datos['estatus'],
+                'descripcion_ruta' => 'Entrega de calzado a Sucursal ' . $datos['municipio'],
             ]);
-            // 'descripcion_ruta' es el nombre real de la columna; el modelo
-            // declara 'descripcion' en $fillable (bug preexistente).
-            $trayecto->descripcion_ruta = 'Entrega de calzado a Sucursal ' . $datos['municipio'];
-            $trayecto->save();
 
             // Para los trayectos "En ruta" se generan 2 posiciones de ejemplo
             // a lo largo de la línea matriz -> sucursal, para que el mapa ya
@@ -242,7 +240,10 @@ class TrayectoDemoSeeder extends Seeder
                 }
             }
 
-            $this->command?->info("Trayecto #{$trayecto->id} ({$datos['municipio']}, {$datos['estatus']}) — compartir en /trayecto/{$trayecto->id}/compartir");
+            // El link para compartir ubicación va firmado (expira y no se
+            // puede fabricar a mano) — se genera desde "Link para el chofer"
+            // en /trayecto/lista, no hay una URL fija que imprimir aquí.
+            $this->command?->info("Trayecto #{$trayecto->id} ({$datos['municipio']}, {$datos['estatus']}) creado.");
         }
     }
 }

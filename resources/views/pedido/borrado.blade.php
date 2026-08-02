@@ -9,7 +9,7 @@
 
     <table class="w-full text-sm mb-4 border border-gray-200 rounded-lg overflow-hidden">
         <tr class="border-b border-gray-200"><th class="text-left px-3 py-2 bg-gray-50 w-1/3">ID</th><td class="px-3 py-2">{{ $pedido->id }}</td></tr>
-        <tr class="border-b border-gray-200"><th class="text-left px-3 py-2 bg-gray-50">Empleado</th><td class="px-3 py-2">{{ $pedido->empleado->nombre ?? '—' }}</td></tr>
+        <tr class="border-b border-gray-200"><th class="text-left px-3 py-2 bg-gray-50">Sucursal</th><td class="px-3 py-2">{{ $sucursalActual->nombre ?? '—' }}</td></tr>
         <tr class="border-b border-gray-200"><th class="text-left px-3 py-2 bg-gray-50">Fecha</th><td class="px-3 py-2">{{ $pedido->fecha }}</td></tr>
         <tr><th class="text-left px-3 py-2 bg-gray-50">Estatus</th><td class="px-3 py-2">{{ $pedido->estatus }}</td></tr>
     </table>

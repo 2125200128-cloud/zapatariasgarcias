@@ -8,7 +8,6 @@ use App\Models\Proveedor;
 
 class MarcaController extends Controller
 {
-    //
     public function inicio()
     {
         $marcas = Marca::with('proveedor')->get();
@@ -84,6 +83,26 @@ class MarcaController extends Controller
         }
         $marca->delete();
         return redirect('/marca')->with('success', 'Marca eliminada');
+    }
+
+    // Alta rápida desde el formulario de producto (vía AJAX), sin salir de la
+    // página ni pedir imagen. Devuelve JSON en vez de redirigir.
+    public function guardarRapido(Request $request)
+    {
+        $nombre = trim((string) $request->input('nombre'));
+        $proveedorId = $request->input('proveedor_id');
+        $proveedor = $proveedorId ? Proveedor::find($proveedorId) : null;
+
+        if ($nombre === '' || !$proveedor) {
+            return response()->json(['error' => 'Escribe un nombre y elige un proveedor.'], 422);
+        }
+
+        $marca = new Marca();
+        $marca->nombre = $nombre;
+        $marca->proveedor_id = $proveedor->id;
+        $marca->save();
+
+        return response()->json(['id' => $marca->id, 'nombre' => $marca->nombre]);
     }
 
     public function mostrar(Request $request)

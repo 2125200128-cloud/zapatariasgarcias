@@ -7,11 +7,10 @@ use Illuminate\Database\Eloquent\Model;
 class Detalle_pedido extends Model
 {
 
-    //
     protected $fillable = [
         'pedido_id',
         'producto_id',
-        'cantidad',
+        'cantidad_solicitada',
         'precio'
     ];
 
