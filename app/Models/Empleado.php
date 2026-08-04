@@ -4,33 +4,32 @@ namespace App\Models;
 
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Schema;
 
 class Empleado extends Authenticatable
 {
     use Notifiable;
 
-     protected $fillable =[
-
-        'nombre',
-        'apellido_paterno',
-        'apellido_materno',
-        'correo',
-        'telefono',
-        'contrasena',
-        'usuario',
-        'rol',
-        'estatus',
-        'calle',
-        'numero',
-        'municipio',
-        'codigo_postal',
-        'imagen'
-
+    protected $fillable = [
+       'nombre',
+       'apellido_paterno',
+       'apellido_materno',
+       'correo',
+       'telefono',
+       'contrasena',
+       'usuario',
+       'rol',
+       'estatus',
+       'calle',
+       'numero',
+       'municipio',
+       'codigo_postal',
+       'imagen',
     ];
 
-
     protected $hidden = [
-        'contrasena',
+       'contrasena',
     ];
 
     public $timestamps = false;
@@ -40,33 +39,61 @@ class Empleado extends Authenticatable
     // hace el mapeo.
     public function getAuthPassword()
     {
-        return $this->contrasena;
+       return $this->contrasena;
     }
 
-    public function sucursales(){
-        return $this->hasMany(Sucursal::class);
-    }
-
-        public function pedidos()
+    public function sucursales()
     {
-        return $this->hasMany(Pedido::class);
+       return $this->hasMany(Sucursal::class);
+    }
+
+    public function pedidos()
+    {
+       return $this->hasMany(Pedido::class);
+    }
+
+    public static function auth(): ?self
+    {
+       $empleado = Auth::guard('empleado')->user();
+
+       return $empleado instanceof self ? $empleado : null;
+    }
+
+    protected function rolNormalizado(): string
+    {
+       return strtolower(trim((string) ($this->rol ?? '')));
     }
 
     public function esAdministrador(): bool
     {
-        return $this->rol === 'Administrador';
+       return $this->rolNormalizado() === 'administrador';
     }
 
-    // La sucursal que este empleado encabeza (si es encargado de alguna).
-    public function miSucursal()
+    // Si el empleado tiene varias sucursales, se elige la sucursal matriz si
+    // existe. De lo contrario, se usa una sucursal estable por id para evitar
+    // comportamiento arbitrario.
+    public function miSucursal(): ?Sucursal
     {
-        return $this->sucursales->first();
+       $matriz = Sucursal::matriz();
+       if ($matriz && $this->sucursales()->whereKey($matriz->id)->exists()) {
+           return $matriz;
+       }
+
+       return $this->sucursales()
+           ->orderBy('id')
+           ->first();
     }
 
     public function esMatriz(): bool
     {
-        $sucursal = $this->miSucursal();
-        return $sucursal && $sucursal->id === optional(Sucursal::matriz())->id;
-    }
+       $sucursal = $this->miSucursal();
+       $matriz = Sucursal::matriz();
 
+       if ($sucursal === null || $matriz === null) {
+           return false;
+       }
+
+       return (int) $sucursal->id === (int) $matriz->id;
+    }
 }
+

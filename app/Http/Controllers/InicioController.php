@@ -2,8 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use App\Models\Empleado;
 use App\Models\Sucursal;
 use App\Models\Producto;
@@ -15,7 +13,11 @@ class InicioController extends Controller
 {
     public function inicio()
     {
-        $empleado = Auth::guard('empleado')->user();
+        $empleado = Empleado::auth();
+        if (!$empleado) {
+            return redirect('/login');
+        }
+
         $esMatrizOAdmin = $empleado->esAdministrador() || $empleado->esMatriz();
 
         if ($esMatrizOAdmin) {

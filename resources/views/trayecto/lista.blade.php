@@ -3,8 +3,8 @@
 @section('dinamico')
 
 @php
-    $empleadoLista = Auth::guard('empleado')->user();
-    $puedeAsignarLista = $empleadoLista->esAdministrador() || $empleadoLista->esMatriz();
+    $empleadoLista = \App\Models\Empleado::auth();
+    $puedeAsignarLista = $empleadoLista && ($empleadoLista->esAdministrador() || $empleadoLista->esMatriz());
 @endphp
 
 <div class="flex items-center justify-between mb-4">
@@ -49,7 +49,7 @@
             @forelse ($trayectos as $trayecto)
                 @php
                     $sucursalDestinoFila = optional($trayecto->pedido?->empleado)->sucursales->first();
-                    $esMiSucursalFila = $sucursalDestinoFila && optional($empleadoLista->miSucursal())->id === $sucursalDestinoFila->id;
+                    $esMiSucursalFila = $sucursalDestinoFila && $empleadoLista && optional($empleadoLista->miSucursal())->id === $sucursalDestinoFila->id;
                 @endphp
                 <tr>
                     <td class="px-4 py-3">{{ $trayecto->id }}</td>
@@ -105,7 +105,7 @@
                                 Link para el chofer
                             </a>
                         @endif
-                        @if ($trayecto->estatus === 'En ruta' && ($empleadoLista->esAdministrador() || $esMiSucursalFila))
+                        @if ($trayecto->estatus === 'En ruta' && (($empleadoLista && $empleadoLista->esAdministrador()) || $esMiSucursalFila))
                             <form action="{{ url('/trayecto/' . $trayecto->id . '/llegada') }}" method="POST" class="inline">
                                 @csrf
                                 <button type="submit" class="text-emerald-700 hover:underline text-sm font-medium">Llegó</button>

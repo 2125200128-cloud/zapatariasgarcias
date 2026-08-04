@@ -3,8 +3,8 @@
 @section('dinamico')
 
 @php
-    $empleadoInventario = Auth::guard('empleado')->user();
-    $puedeGestionarInventario = $empleadoInventario->esAdministrador() || $empleadoInventario->esMatriz();
+    $empleadoInventario = \App\Models\Empleado::auth();
+    $puedeGestionarInventario = $empleadoInventario && ($empleadoInventario->esAdministrador() || $empleadoInventario->esMatriz());
 @endphp
 
 <div class="flex items-center justify-between mb-4">

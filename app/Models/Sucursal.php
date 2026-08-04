@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Schema;
 
 class Sucursal extends Model
 {
@@ -17,14 +18,13 @@ class Sucursal extends Model
         'codigo_postal',
         'contacto',
         'imagen',
-        'estatus'
+        'estatus',
+        'es_matriz',
     ];
 
     public $timestamps = false;
 
-
-
-        public function empleado()
+    public function empleado()
     {
         return $this->belongsTo(Empleado::class);
     }
@@ -34,11 +34,30 @@ class Sucursal extends Model
         return $this->hasMany(Inventario::class);
     }
 
-    // La matriz es una sucursal más (mismo nombre que ya usa
-    // config('ubicaciones.matriz') para el mapa de flota); se ubica por
-    // nombre en vez de un id fijo o una columna nueva.
-    public static function matriz()
+    // La matriz se identifica por el campo 'es_matriz' si la BD lo tiene;
+    // si no, se usa el nombre configurado como fallback para mantener la
+    // compatibilidad con proyectos ya creados.
+    public static function matriz(): ?self
     {
-        return static::where('nombre', config('ubicaciones.matriz.nombre'))->first();
+        if (Schema::hasTable('sucursales') && Schema::hasColumn('sucursales', 'es_matriz')) {
+            $matriz = static::query()->where('es_matriz', true)->first();
+            if ($matriz) {
+                return $matriz;
+            }
+        }
+
+        $nombreMatriz = config('ubicaciones.matriz.nombre');
+        if ($nombreMatriz) {
+            $matriz = static::query()->where('nombre', $nombreMatriz)->first();
+            if ($matriz) {
+                return $matriz;
+            }
+        }
+
+        return static::query()
+            ->where('estatus', 'Activo')
+            ->orderBy('id')
+            ->first();
     }
 }
+

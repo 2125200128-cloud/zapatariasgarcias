@@ -3,9 +3,9 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\URL;
+use App\Models\Empleado;
 use App\Models\Trayecto;
 use App\Models\TrayectoUbicacion;
 use App\Models\Chofer;
@@ -17,10 +17,10 @@ class TrayectoController extends Controller
 {
     // Administrador y el Encargado de la matriz asignan/gestionan cualquier
     // trayecto; un Encargado de sucursal solo ve los suyos.
-    private function puedeAsignar()
+    private function puedeAsignar(): bool
     {
-        $empleado = Auth::guard('empleado')->user();
-        return $empleado->esAdministrador() || $empleado->esMatriz();
+        $empleado = Empleado::auth();
+        return $empleado !== null && ($empleado->esAdministrador() || $empleado->esMatriz());
     }
 
     public function listado()
@@ -28,8 +28,8 @@ class TrayectoController extends Controller
         $query = Trayecto::with(['chofer', 'carro', 'pedido.empleado.sucursales']);
 
         if (!$this->puedeAsignar()) {
-            $miSucursal = Auth::guard('empleado')->user()->miSucursal();
-            $miEmpleadoId = optional($miSucursal)->empleado_id ?? 0;
+            $miSucursal = Empleado::auth()?->miSucursal();
+            $miEmpleadoId = $miSucursal?->empleado_id ?? 0;
             $query->whereHas('pedido', function ($q) use ($miEmpleadoId) {
                 $q->where('empleado_id', $miEmpleadoId);
             });
@@ -145,9 +145,9 @@ class TrayectoController extends Controller
             return redirect('/trayecto/lista')->with('error', 'Este trayecto todavía no está en ruta.');
         }
 
-        $empleado = Auth::guard('empleado')->user();
-        if (!$empleado->esAdministrador()) {
-            $miSucursal = $empleado->miSucursal();
+        $empleado = Empleado::auth();
+        if (!$empleado || !$empleado->esAdministrador()) {
+            $miSucursal = $empleado?->miSucursal();
             $sucursalDestino = optional($trayecto->pedido?->empleado)->sucursales->first();
             if (!$miSucursal || !$sucursalDestino || $miSucursal->id !== $sucursalDestino->id) {
                 abort(403, 'Solo el encargado de la sucursal destino puede confirmar la llegada.');
@@ -231,8 +231,8 @@ class TrayectoController extends Controller
         // Igual que en listado(): una sucursal solo ve el trayecto de sus
         // propios pedidos en el mapa, no el de las demás.
         if (!$this->puedeAsignar()) {
-            $miSucursal = Auth::guard('empleado')->user()->miSucursal();
-            $miEmpleadoId = optional($miSucursal)->empleado_id ?? 0;
+            $miSucursal = Empleado::auth()?->miSucursal();
+            $miEmpleadoId = $miSucursal?->empleado_id ?? 0;
             $query->whereHas('pedido', function ($q) use ($miEmpleadoId) {
                 $q->where('empleado_id', $miEmpleadoId);
             });

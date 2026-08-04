@@ -3,8 +3,8 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use App\Models\Empleado;
 use App\Models\Pedido;
 use App\Models\Sucursal;
 use App\Models\Producto;
@@ -19,10 +19,10 @@ class PedidoController extends Controller
 {
     // Un Encargado de sucursal (que no sea de la matriz) solo ve/toca sus
     // propios pedidos; Administrador y el Encargado de la matriz ven todo.
-    private function puedeAsignar()
+    private function puedeAsignar(): bool
     {
-        $empleado = Auth::guard('empleado')->user();
-        return $empleado->esAdministrador() || $empleado->esMatriz();
+        $empleado = Empleado::auth();
+        return $empleado !== null && ($empleado->esAdministrador() || $empleado->esMatriz());
     }
 
     private function autorizarPedido(Pedido $pedido)
@@ -30,7 +30,7 @@ class PedidoController extends Controller
         if ($this->puedeAsignar()) {
             return;
         }
-        $miSucursal = Auth::guard('empleado')->user()->miSucursal();
+        $miSucursal = Empleado::auth()?->miSucursal();
         if (!$miSucursal || $pedido->empleado_id !== $miSucursal->empleado_id) {
             abort(403, 'No tienes acceso a este pedido.');
         }
@@ -41,8 +41,8 @@ class PedidoController extends Controller
         $query = Pedido::with(['empleado.sucursales', 'detallePedidos', 'trayectos']);
 
         if (!$this->puedeAsignar()) {
-            $miSucursal = Auth::guard('empleado')->user()->miSucursal();
-            $query->where('empleado_id', optional($miSucursal)->empleado_id ?? 0);
+            $miSucursal = Empleado::auth()?->miSucursal();
+            $query->where('empleado_id', $miSucursal?->empleado_id ?? 0);
         }
 
         $pedidos = $query->get();
@@ -52,11 +52,11 @@ class PedidoController extends Controller
 
     public function formulario()
     {
-        $empleado = Auth::guard('empleado')->user();
+        $empleado = Empleado::auth();
         $puedeElegirSucursal = $this->puedeAsignar();
 
         $sucursales = $puedeElegirSucursal ? Sucursal::all() : collect();
-        $sucursalFija = $puedeElegirSucursal ? null : $empleado->miSucursal();
+        $sucursalFija = $puedeElegirSucursal || !$empleado ? null : $empleado->miSucursal();
 
         $productos = Producto::all();
 
@@ -151,14 +151,14 @@ class PedidoController extends Controller
 
     public function guardar(Request $request)
     {
-        $empleado = Auth::guard('empleado')->user();
+        $empleado = Empleado::auth();
 
         if ($this->puedeAsignar()) {
             $sucursal = Sucursal::find($request->input('sucursal_id'));
         } else {
             // Un encargado de sucursal solo pide para la suya — se ignora
             // cualquier sucursal_id que venga del formulario.
-            $sucursal = $empleado->miSucursal();
+            $sucursal = $empleado?->miSucursal();
         }
 
         if (!$sucursal) {

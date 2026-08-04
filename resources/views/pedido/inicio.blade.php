@@ -3,8 +3,8 @@
 @section('dinamico')
 
 @php
-    $empleadoPedidos = Auth::guard('empleado')->user();
-    $puedeAsignarPedidos = $empleadoPedidos->esAdministrador() || $empleadoPedidos->esMatriz();
+    $empleadoPedidos = \App\Models\Empleado::auth();
+    $puedeAsignarPedidos = $empleadoPedidos && ($empleadoPedidos->esAdministrador() || $empleadoPedidos->esMatriz());
 @endphp
 
 <div class="flex items-center justify-between mb-4">
@@ -38,7 +38,7 @@
                 @php
                     $trayecto = $pedido->trayectos->first();
                     $sucursalPedido = optional($pedido->empleado)->sucursales->first();
-                    $esMiSucursal = $sucursalPedido && optional($empleadoPedidos->miSucursal())->id === $sucursalPedido->id;
+                    $esMiSucursal = $sucursalPedido && $empleadoPedidos && optional($empleadoPedidos->miSucursal())->id === $sucursalPedido->id;
                 @endphp
                 <tr>
                     <td class="px-4 py-3">{{ $pedido->id }}</td>
@@ -89,7 +89,7 @@
                             <a href="{{ url('/pedido/editar/' . $pedido->id) }}" class="text-blue-600 hover:underline">Editar</a>
                         @endif
                         <a href="{{ url('/pedido/' . $pedido->id . '/pdf') }}" class="text-green-700 hover:underline" target="_blank">Ver nota</a>
-                        @if ($trayecto && $trayecto->estatus === 'En ruta' && ($empleadoPedidos->esAdministrador() || $esMiSucursal))
+                        @if ($trayecto && $trayecto->estatus === 'En ruta' && ($empleadoPedidos && $empleadoPedidos->esAdministrador() || $esMiSucursal))
                             <form action="{{ url('/trayecto/' . $trayecto->id . '/llegada') }}" method="POST" class="inline">
                                 @csrf
                                 <button type="submit" class="text-emerald-700 hover:underline font-medium">Llegó</button>

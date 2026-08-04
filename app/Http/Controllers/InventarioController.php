@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
+use App\Models\Empleado;
 use App\Models\Inventario;
 use App\Models\Sucursal;
 use App\Models\Producto;
@@ -13,10 +13,10 @@ class InventarioController extends Controller
     // El inventario es cosa de la matriz (Administrador o el Encargado de la
     // matriz) — una sucursal no registra ni edita inventario, el suyo se
     // abona solo al confirmar la llegada de un trayecto.
-    private function puedeAsignar()
+    private function puedeAsignar(): bool
     {
-        $empleado = Auth::guard('empleado')->user();
-        return $empleado->esAdministrador() || $empleado->esMatriz();
+        $empleado = Empleado::auth();
+        return $empleado !== null && ($empleado->esAdministrador() || $empleado->esMatriz());
     }
 
     public function inicio()
@@ -26,8 +26,8 @@ class InventarioController extends Controller
         // La matriz ve todo; una sucursal solo ve su propio stock (de solo
         // lectura — registrar/editar sigue siendo exclusivo de la matriz).
         if (!$this->puedeAsignar()) {
-            $miSucursal = Auth::guard('empleado')->user()->miSucursal();
-            $query->where('sucursal_id', optional($miSucursal)->id ?? 0);
+            $miSucursal = Empleado::auth()?->miSucursal();
+            $query->where('sucursal_id', $miSucursal?->id ?? 0);
         }
 
         $inventarios = $query->get();
