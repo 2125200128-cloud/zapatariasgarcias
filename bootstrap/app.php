@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\CambiarConexionBaseDatos;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -13,8 +14,13 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([
             'admin' => \App\Http\Middleware\EsAdministrador::class,
+            'cambiar_conexion' => CambiarConexionBaseDatos::class,
         ]);
+
+        // Esto hace que se ejecute automáticamente en cada petición
+        $middleware->append(CambiarConexionBaseDatos::class);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //
-    })->create();
+    })
+    ->create();
