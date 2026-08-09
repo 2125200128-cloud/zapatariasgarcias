@@ -3,237 +3,116 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Models\Producto;
-use App\Models\Marca;
-use App\Models\Proveedor;
+use RuntimeException;
 
-class ProductoController extends Controller
+class ProductoController extends ApiFrontController
 {
     public function inicio()
     {
-        $productos = Producto::with(['marca', 'proveedor'])
-            ->orderBy('nombre')
-            ->orderByRaw('CAST(talla AS DECIMAL(4,1))')
-            ->get();
+        try {
+            $payload = $this->client()->get('/api/productos', $this->token());
+        } catch (RuntimeException $exception) {
+            return redirect('/login')->withErrors(['usuario' => $exception->getMessage()]);
+        }
 
-        // Un alta con varias tallas crea un producto por talla (mismo nombre,
-        // marca, precio, etc.). Para que la lista no se vea como una fila
-        // repetida por cada talla, se agrupan aquí por los campos que
-        // comparten y se muestran las tallas juntas en una sola fila.
-        $grupos = $productos->groupBy(function ($producto) {
-            return implode('|', [
-                $producto->nombre,
-                $producto->descripcion,
-                $producto->marca_id,
-                $producto->proveedor_id,
-                $producto->modelo,
-                $producto->color,
-                $producto->sexo,
-                $producto->categoria,
-                $producto->precio,
-                $producto->estatus,
-            ]);
-        })->values();
+        $grupos = $this->normalizeCollection($payload['grupos'] ?? []);
 
         return view('producto/inicio', compact('grupos'));
     }
 
-    // Tallas de calzado disponibles para elegir en el alta masiva (no viene de la BD).
-    private function tallasDisponibles()
-    {
-        $tallas = [];
-        for ($t = 22; $t <= 30; $t += 0.5) {
-            $tallas[] = rtrim(rtrim(number_format($t, 1), '0'), '.');
-        }
-        return $tallas;
-    }
-
-    // 'categoria' es un texto libre en la BD (no hay tabla de categorías);
-    // aquí solo se recopilan los valores que ya se han usado para ofrecerlos
-    // como opciones y evitar variantes tipo "Tenis"/"tenis"/"Tennis".
-    private function categoriasDisponibles()
-    {
-        return Producto::whereNotNull('categoria')
-            ->where('categoria', '!=', '')
-            ->distinct()
-            ->orderBy('categoria')
-            ->pluck('categoria');
-    }
-
     public function formulario()
     {
-        $marcas = Marca::all();
-        $proveedores = Proveedor::all();
-        $tallas = $this->tallasDisponibles();
-        $categorias = $this->categoriasDisponibles();
-
-        return view('producto/formulario', compact('marcas', 'proveedores', 'tallas', 'categorias'));
-    }
-
-    public function editar(Request $request)
-    {
-        $id = $request->route('id');
-        $producto = Producto::find($id);
-        if (!$producto) {
-            return redirect('/producto')->with('error', 'Producto no encontrado');
-        }
-        $marcas = Marca::all();
-        $proveedores = Proveedor::all();
-        $categorias = $this->categoriasDisponibles();
-
-        return view('producto/edicion', compact('producto', 'marcas', 'proveedores', 'categorias'));
-    }
-
-    public function actualizar(Request $request)
-    {
-        $id = $request->route('id');
-        $producto = Producto::find($id);
-        if (!$producto) {
-            return redirect('/producto')->with('error', 'Producto no encontrado');
+        try {
+            $marcasPayload = $this->client()->get('/api/marcas', $this->token());
+            $proveedoresPayload = $this->client()->get('/api/proveedores', $this->token());
+        } catch (RuntimeException $exception) {
+            return redirect('/producto')->withErrors(['producto' => $exception->getMessage()]);
         }
 
-        // El listado agrupa las tallas de un mismo zapato por estos campos
-        // (ver inicio()). Si solo se actualizara esta fila, cambiar por
-        // ejemplo el precio o el nombre separaría esta talla del resto como
-        // si fuera "otro producto" — así que los campos compartidos se
-        // buscan y actualizan en todas las tallas hermanas (detectadas ANTES
-        // de aplicar los cambios). Talla y estatus sí son de esta fila sola
-        // (una talla se puede agotar sin afectar a las demás).
-        $hermanos = Producto::where('id', '!=', $producto->id)
-            ->where('nombre', $producto->nombre)
-            ->where('descripcion', $producto->descripcion)
-            ->where('marca_id', $producto->marca_id)
-            ->where('proveedor_id', $producto->proveedor_id)
-            ->where('modelo', $producto->modelo)
-            ->where('color', $producto->color)
-            ->where('sexo', $producto->sexo)
-            ->where('categoria', $producto->categoria)
-            ->where('precio', $producto->precio)
-            ->where('estatus', $producto->estatus)
-            ->get();
+        $marcas = $this->normalizeCollection($marcasPayload['marcas'] ?? []);
+        $proveedores = $this->normalizeCollection($proveedoresPayload['proveedores'] ?? []);
 
-        $camposCompartidos = [
-            'nombre' => $request->input('nombre'),
-            'descripcion' => $request->input('descripcion'),
-            'marca_id' => $request->input('marca_id'),
-            'proveedor_id' => $request->input('proveedor_id'),
-            'precio' => $request->input('precio'),
-            'modelo' => $request->input('modelo'),
-            'color' => $request->input('color'),
-            'sexo' => $request->input('sexo'),
-            'categoria' => $request->input('categoria'),
-        ];
-
-        foreach ($hermanos as $hermano) {
-            $hermano->fill($camposCompartidos);
-            $hermano->save();
-        }
-
-        $producto->nombre = $request->input('nombre');
-        $producto->descripcion = $request->input('descripcion');
-        $producto->marca_id = $request->input('marca_id');
-        $producto->proveedor_id = $request->input('proveedor_id');
-        $producto->precio = $request->input('precio');
-        $producto->modelo = $request->input('modelo');
-        $producto->color = $request->input('color');
-        $producto->sexo = $request->input('sexo');
-        $producto->categoria = $request->input('categoria');
-        $producto->talla = $request->input('talla');
-        $producto->estatus = $request->input('estatus');
-        $producto->save();
-
-        foreach (['imagen1', 'imagen2', 'imagen3'] as $campo) {
-            if ($request->hasFile($campo)) {
-                $file = $request->file($campo);
-                $nombre = 'producto_' . $producto->id . '_' . $campo . '.' . $file->getClientOriginalExtension();
-                $ruta = $file->storeAs('imagenes/productos', $nombre, 'public');
-                $producto->{$campo} = url('storage/' . $ruta);
-                $producto->save();
-            }
-        }
-
-        $mensaje = $hermanos->isNotEmpty()
-            ? 'Producto actualizado (se aplicó a las ' . ($hermanos->count() + 1) . ' tallas de este modelo).'
-            : 'Producto actualizado';
-
-        return redirect('/producto')->with('success', $mensaje);
+        return view('producto/formulario', compact('marcas', 'proveedores'));
     }
 
     public function guardar(Request $request)
     {
-        $tallas = array_filter($request->input('tallas', []));
-        if (empty($tallas)) {
-            return redirect('/producto/formulario')->with('error', 'Selecciona al menos una talla');
-        }
+        $data = $request->except(['_token']);
+        $data['tallas'] = array_values(array_filter($request->input('tallas', []), fn ($talla) => $talla !== ''));
 
-        // Las imágenes se suben una sola vez y se comparten entre todas las
-        // tallas creadas (es el mismo modelo de zapato, solo cambia la talla).
-        $urls = ['imagen1' => null, 'imagen2' => null, 'imagen3' => null];
-        foreach (array_keys($urls) as $campo) {
+        foreach (['imagen1', 'imagen2', 'imagen3'] as $campo) {
             if ($request->hasFile($campo)) {
-                $file = $request->file($campo);
-                $nombre = 'producto_' . $campo . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
-                $ruta = $file->storeAs('imagenes/productos', $nombre, 'public');
-                $urls[$campo] = url('storage/' . $ruta);
+                $data[$campo] = $request->file($campo);
             }
         }
 
-        foreach ($tallas as $talla) {
-            $producto = new Producto();
-            $producto->nombre = $request->input('nombre');
-            $producto->descripcion = $request->input('descripcion');
-            $producto->marca_id = $request->input('marca_id');
-            $producto->proveedor_id = $request->input('proveedor_id');
-            $producto->precio = $request->input('precio');
-            $producto->modelo = $request->input('modelo');
-            $producto->color = $request->input('color');
-            $producto->sexo = $request->input('sexo');
-            $producto->categoria = $request->input('categoria');
-            $producto->talla = $talla;
-            $producto->estatus = $request->input('estatus');
-            $producto->imagen1 = $urls['imagen1'] ?? 'sin-imagen.jpg';
-            $producto->imagen2 = $urls['imagen2'];
-            $producto->imagen3 = $urls['imagen3'];
-            $producto->save();
+        try {
+            $this->client()->post('/api/productos', $data, $this->token());
+        } catch (RuntimeException $exception) {
+            return back()->withErrors(['producto' => $exception->getMessage()])->withInput();
         }
 
-        $mensaje = count($tallas) > 1
-            ? count($tallas) . ' productos guardados (uno por talla).'
-            : 'Producto guardado exitosamente.';
-
-        return redirect('/producto')->with('success', $mensaje);
+        return redirect('/producto')->with('success', 'Producto guardado correctamente.');
     }
 
-    public function eliminar(Request $request)
+    public function editar(string $id)
     {
-        $id = $request->route('id');
-        $producto = Producto::find($id);
-        if (!$producto) {
-            return redirect('/producto')->with('error', 'Producto no encontrado');
+        try {
+            $payload = $this->client()->get('/api/productos/' . $id, $this->token());
+            $marcasPayload = $this->client()->get('/api/marcas', $this->token());
+            $proveedoresPayload = $this->client()->get('/api/proveedores', $this->token());
+        } catch (RuntimeException $exception) {
+            return redirect('/producto')->withErrors(['producto' => $exception->getMessage()]);
         }
 
-        // No se puede borrar de la BD si ya tiene inventario o pedidos
-        // ligados (llave foránea) — se marca Agotado en vez de tronar.
-        if ($producto->inventarios()->exists() || $producto->detallePedidos()->exists()) {
-            $producto->estatus = 'Agotado';
-            $producto->save();
+        $producto = $this->normalizePayload($payload['producto'] ?? null);
+        $marcas = $this->normalizeCollection($marcasPayload['marcas'] ?? []);
+        $proveedores = $this->normalizeCollection($proveedoresPayload['proveedores'] ?? []);
+        $categorias = $this->normalizeCollection($payload['categorias'] ?? []);
 
-            return redirect('/producto')->with('success',
-                '"' . $producto->nombre . '" (talla ' . $producto->talla . ') tiene inventario o pedidos registrados, '
-                . 'así que no se puede eliminar por completo — se marcó como Agotado en su lugar.');
-        }
-
-        $producto->delete();
-        return redirect('/producto')->with('success', 'Producto eliminado');
+        return view('producto/edicion', compact('producto', 'marcas', 'proveedores', 'categorias'));
     }
 
-    public function mostrar(Request $request)
+    public function actualizar(Request $request, string $id)
     {
-        $id = $request->route('id');
-        $producto = Producto::find($id);
-        if (!$producto) {
-            return redirect('/producto')->with('error', 'Producto no encontrado');
+        $data = $request->except(['_token', '_method']);
+
+        foreach (['imagen1', 'imagen2', 'imagen3'] as $campo) {
+            if ($request->hasFile($campo)) {
+                $data[$campo] = $request->file($campo);
+            }
         }
-        return view('producto/borrado', ['producto' => $producto]);
+
+        try {
+            $this->client()->put('/api/productos/' . $id, $data, $this->token());
+        } catch (RuntimeException $exception) {
+            return back()->withErrors(['producto' => $exception->getMessage()])->withInput();
+        }
+
+        return redirect('/producto')->with('success', 'Producto actualizado correctamente.');
+    }
+
+    public function mostrar(string $id)
+    {
+        try {
+            $payload = $this->client()->get('/api/productos/' . $id, $this->token());
+        } catch (RuntimeException $exception) {
+            return redirect('/producto')->withErrors(['producto' => $exception->getMessage()]);
+        }
+
+        $producto = $this->normalizePayload($payload['producto'] ?? null);
+
+        return view('producto/borrado', compact('producto'));
+    }
+
+    public function eliminar(Request $request, string $id)
+    {
+        try {
+            $payload = $this->client()->delete('/api/productos/' . $id, $this->token());
+        } catch (RuntimeException $exception) {
+            return redirect('/producto')->withErrors(['producto' => $exception->getMessage()]);
+        }
+
+        return redirect('/producto')->with('success', $payload['message'] ?? 'Producto eliminado correctamente.');
     }
 }

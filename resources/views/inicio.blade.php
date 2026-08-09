@@ -1,4 +1,3 @@
-
 @extends('/plantilla/base')
 
 @section('dinamico')
@@ -7,39 +6,61 @@
     @if ($esMatrizOAdmin)
         <div class="bg-white p-5 rounded-lg shadow">
             <p class="text-sm text-gray-500">Sucursales activas</p>
-            <p class="text-3xl font-semibold text-gray-900 mt-1">{{ $kpis['sucursales'] }}</p>
+            <p class="text-3xl font-semibold text-gray-900 mt-1">{{ data_get($kpis, 'sucursales', 0) }}</p>
         </div>
         <div class="bg-white p-5 rounded-lg shadow">
             <p class="text-sm text-gray-500">Pedidos pendientes</p>
-            <p class="text-3xl font-semibold text-gray-900 mt-1">{{ $kpis['pedidosPendientes'] }}</p>
+            <p class="text-3xl font-semibold text-gray-900 mt-1">{{ data_get($kpis, 'pedidosPendientes', 0) }}</p>
         </div>
         <div class="bg-white p-5 rounded-lg shadow">
             <p class="text-sm text-gray-500">Productos activos</p>
-            <p class="text-3xl font-semibold text-gray-900 mt-1">{{ $kpis['productos'] }}</p>
+            <p class="text-3xl font-semibold text-gray-900 mt-1">{{ data_get($kpis, 'productos', 0) }}</p>
         </div>
         <div class="bg-white p-5 rounded-lg shadow">
             <p class="text-sm text-gray-500">Choferes activos</p>
-            <p class="text-3xl font-semibold text-gray-900 mt-1">{{ $kpis['choferes'] }}</p>
+            <p class="text-3xl font-semibold text-gray-900 mt-1">{{ data_get($kpis, 'choferes', 0) }}</p>
         </div>
     @else
         <div class="bg-white p-5 rounded-lg shadow">
             <p class="text-sm text-gray-500">Mis pedidos pendientes</p>
-            <p class="text-3xl font-semibold text-gray-900 mt-1">{{ $kpis['pendientes'] }}</p>
+            <p class="text-3xl font-semibold text-gray-900 mt-1">{{ data_get($kpis, 'pendientes', 0) }}</p>
         </div>
         <div class="bg-white p-5 rounded-lg shadow">
             <p class="text-sm text-gray-500">Mis pedidos en camino</p>
-            <p class="text-3xl font-semibold text-gray-900 mt-1">{{ $kpis['enCamino'] }}</p>
+            <p class="text-3xl font-semibold text-gray-900 mt-1">{{ data_get($kpis, 'enCamino', 0) }}</p>
         </div>
         <div class="bg-white p-5 rounded-lg shadow">
             <p class="text-sm text-gray-500">Mis pedidos entregados</p>
-            <p class="text-3xl font-semibold text-gray-900 mt-1">{{ $kpis['entregados'] }}</p>
+            <p class="text-3xl font-semibold text-gray-900 mt-1">{{ data_get($kpis, 'entregados', 0) }}</p>
         </div>
         <div class="bg-white p-5 rounded-lg shadow">
-            <p class="text-sm text-gray-500">Productos activos</p>
-            <p class="text-3xl font-semibold text-gray-900 mt-1">{{ $kpis['productos'] }}</p>
+            <p class="text-sm text-gray-500">Mi inventario (unidades)</p>
+            <p class="text-3xl font-semibold text-gray-900 mt-1">{{ data_get($kpis, 'inventarioTotal', 0) }}</p>
         </div>
     @endif
 </div>
+
+@if (!$esMatrizOAdmin && $trayectoActivoResumen)
+    <div class="bg-white p-5 rounded-lg shadow mb-6 border-l-4 border-amber-400">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-sm text-gray-500">Entrega en curso — Pedido #{{ data_get($trayectoActivoResumen, 'pedido_id', '—') }}</p>
+                <p class="text-lg font-semibold text-gray-900 mt-1">
+                    {{ data_get($trayectoActivoResumen, 'estatus', '—') }}
+                    @if (data_get($trayectoActivoResumen, 'chofer'))
+                        — {{ data_get($trayectoActivoResumen, 'chofer') }}
+                    @endif
+                </p>
+                @if (data_get($trayectoActivoResumen, 'descripcion_ruta'))
+                    <p class="text-sm text-gray-500 mt-1">{{ data_get($trayectoActivoResumen, 'descripcion_ruta') }}</p>
+                @endif
+            </div>
+            <a href="{{ url('/trayecto/flota') }}" class="bg-amber-500 text-white px-4 py-2 rounded-lg text-sm hover:bg-amber-600 whitespace-nowrap">
+                Ver en el mapa
+            </a>
+        </div>
+    </div>
+@endif
 
 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
     <div class="bg-white p-6 rounded-lg shadow">
@@ -58,11 +79,7 @@
     <div class="bg-white p-6 rounded-lg shadow">
         <h2 class="text-base font-semibold text-gray-800 mb-1">Productos más solicitados</h2>
         <p class="text-sm text-gray-500 mb-4">
-            @if ($esMatrizOAdmin)
-                Top 5 por unidades pedidas en total.
-            @else
-                Top 5 que más ha pedido tu sucursal.
-            @endif
+            {{ $esMatrizOAdmin ? 'Top 5 por unidades pedidas en total.' : 'Top 5 que más ha pedido tu sucursal.' }}
         </p>
         <div class="relative h-64">
             <canvas id="graficoProductos"></canvas>
@@ -88,8 +105,6 @@ document.addEventListener("DOMContentLoaded", () => {
     Chart.defaults.font.family = "system-ui, -apple-system, 'Segoe UI', sans-serif";
     Chart.defaults.color = inkMuted;
 
-    // Specs de la marca (no incluyen indexAxis: Chart.js solo lo lee en
-    // options, nunca dentro del dataset).
     const marcaBarra = {
         maxBarThickness: 24,
         borderRadius: 4,
@@ -102,13 +117,13 @@ document.addEventListener("DOMContentLoaded", () => {
         ticks: { padding: 8 },
     };
 
-    // ---- Pedidos por sucursal (matriz) / Mis pedidos por mes (sucursal) ----
+    // ---- Pedidos por sucursal / Mis pedidos por mes ----
     new Chart(document.getElementById('graficoSucursales'), {
         type: 'bar',
         data: {
-            labels: @json($grafico1Labels),
+            labels: @json($grafico1Labels ?? []),
             datasets: [{
-                data: @json($grafico1Datos),
+                data: @json($grafico1Datos ?? []),
                 backgroundColor: '#2a78d6',
                 ...marcaBarra,
             }],
@@ -125,13 +140,13 @@ document.addEventListener("DOMContentLoaded", () => {
         },
     });
 
-    // ---- Productos más solicitados (horizontal, nombres largos: aqua) ----
+    // ---- Productos más solicitados ----
     new Chart(document.getElementById('graficoProductos'), {
         type: 'bar',
         data: {
-            labels: @json($topProductos->pluck('nombre')),
+            labels: @json($topProductos?->pluck('nombre') ?? []),
             datasets: [{
-                data: @json($topProductos->pluck('total')),
+                data: @json($topProductos?->pluck('total') ?? []),
                 backgroundColor: '#1baf7a',
                 ...marcaBarra,
             }],
@@ -148,9 +163,9 @@ document.addEventListener("DOMContentLoaded", () => {
         },
     });
 
-    // ---- Pedidos por estatus (horizontal, color fijo por estatus: bueno/alerta/crítico) ----
+    // ---- Pedidos por estatus ----
     const coloresEstatus = { Pendiente: '#fab219', Realizado: '#0ca30c', Cancelado: '#d03b3b' };
-    const datosEstatus = @json($pedidosPorEstatus);
+    const datosEstatus = @json($pedidosPorEstatus ?? []);
 
     new Chart(document.getElementById('graficoEstatus'), {
         type: 'bar',

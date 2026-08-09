@@ -2,25 +2,18 @@
 
 @section('dinamico')
 
-<h1 class="text-2xl font-semibold text-gray-800 mb-4">Eliminar producto</h1>
+<div class="max-w-2xl rounded-lg bg-white p-6 shadow">
+    <h1 class="text-2xl font-semibold text-gray-800">Confirmar eliminación</h1>
+    <p class="mt-3 text-sm text-gray-600">
+        ¿Deseas continuar con la eliminación del producto <strong>{{ data_get($producto, 'nombre', 'este producto') }}</strong>?
+        La API marcará el registro como agotado si tiene dependencias.
+    </p>
 
-<div class="bg-white rounded-lg shadow p-6 max-w-lg">
-    <p class="text-gray-700 mb-4">¿Seguro que quieres eliminar el producto <strong>{{ $producto->nombre }}</strong>?</p>
-
-    <table class="w-full text-sm mb-4 border border-gray-200 rounded-lg overflow-hidden">
-        <tr class="border-b border-gray-200"><th class="text-left px-3 py-2 bg-gray-50 w-1/3">ID</th><td class="px-3 py-2">{{ $producto->id }}</td></tr>
-        <tr class="border-b border-gray-200"><th class="text-left px-3 py-2 bg-gray-50">Nombre</th><td class="px-3 py-2">{{ $producto->nombre }}</td></tr>
-        <tr class="border-b border-gray-200"><th class="text-left px-3 py-2 bg-gray-50">Precio</th><td class="px-3 py-2">{{ $producto->precio }}</td></tr>
-        <tr><th class="text-left px-3 py-2 bg-gray-50">Estatus</th><td class="px-3 py-2">{{ $producto->estatus }}</td></tr>
-    </table>
-
-    <div class="flex gap-3">
-        <form action="{{ url('/producto/eliminar/' . $producto->id) }}" method="POST">
-            @csrf
-            <button type="submit" class="bg-red-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-red-700">Sí, eliminar</button>
-        </form>
-        <a href="{{ url('/producto') }}" class="px-4 py-2 rounded-lg text-sm border border-gray-300 hover:bg-gray-50">Cancelar</a>
-    </div>
+    <form action="{{ url('/producto/eliminar/' . data_get($producto, 'id', '')) }}" method="POST" class="mt-6 flex gap-3">
+        @csrf
+        <a href="{{ url('/producto') }}" class="rounded-lg border border-gray-300 px-4 py-2 text-sm text-gray-600 hover:bg-gray-50">Cancelar</a>
+        <button type="submit" class="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700">Confirmar</button>
+    </form>
 </div>
 
 @endsection

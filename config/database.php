@@ -44,16 +44,6 @@ return [
             'transaction_mode' => 'DEFERRED',
         ],
 
-            'sqlite_backup' => [
-        'driver' => 'sqlite',
-        'database' => database_path('respaldo.sqlite'),
-        'prefix' => '',
-        'foreign_key_constraints' => true,
-        'busy_timeout' => 5000,
-        'journal_mode' => 'WAL',
-        'synchronous' => 'NORMAL',
-        'transaction_mode' => 'DEFERRED',
-         ],
 
         'mysql' => [
             'driver' => 'mysql',

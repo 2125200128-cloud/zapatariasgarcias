@@ -3,14 +3,19 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
-use App\Models\Empleado;
+use RuntimeException;
 
-class EmpleadoController extends Controller
+class EmpleadoController extends ApiFrontController
 {
     public function inicio()
     {
-        $empleados = Empleado::all();
+        try {
+            $payload = $this->client()->get('/api/empleados', $this->token());
+        } catch (RuntimeException $exception) {
+            return redirect('/login')->withErrors(['usuario' => $exception->getMessage()]);
+        }
+
+        $empleados = $this->normalizeCollection($payload['empleados'] ?? []);
 
         return view('empleado/inicio', compact('empleados'));
     }
@@ -20,100 +25,76 @@ class EmpleadoController extends Controller
         return view('empleado/formulario');
     }
 
-    public function editar(Request $request)
-    {
-        $id = $request->route('id');
-        $empleado = Empleado::find($id);
-        if (!$empleado) {
-            return redirect('/empleado')->with('error', 'Empleado no encontrado');
-        }
-        return view('empleado/edicion', ['empleado' => $empleado]);
-    }
-
-    public function actualizar(Request $request)
-    {
-        $id = $request->route('id');
-        $empleado = Empleado::find($id);
-        if (!$empleado) {
-            return redirect('/empleado')->with('error', 'Empleado no encontrado');
-        }
-        $empleado->nombre = $request->input('nombre');
-        $empleado->apellido_paterno = $request->input('apellido_paterno');
-        $empleado->apellido_materno = $request->input('apellido_materno');
-        $empleado->telefono = $request->input('telefono');
-        $empleado->correo = $request->input('correo');
-        $empleado->usuario = $request->input('usuario');
-        if ($request->filled('contrasena')) {
-            $empleado->contrasena = Hash::make($request->input('contrasena'));
-        }
-        $empleado->rol = $request->input('rol');
-        $empleado->estatus = $request->input('estatus');
-        $empleado->calle = $request->input('calle');
-        $empleado->numero = $request->input('numero');
-        $empleado->municipio = $request->input('municipio');
-        $empleado->codigo_postal = $request->input('codigo_postal');
-        $empleado->save();
-
-        if ($request->hasFile('imagen')) {
-            $file = $request->file('imagen');
-            $nombre = 'empleado_' . $empleado->id . '.' . $file->getClientOriginalExtension();
-            $ruta = $file->storeAs('imagenes/empleados', $nombre, 'public');
-            $empleado->imagen = url('storage/' . $ruta);
-            $empleado->save();
-        }
-
-        return redirect('/empleado')->with('success', 'Empleado actualizado');
-    }
-
     public function guardar(Request $request)
     {
-        $empleado = new Empleado();
-        $empleado->nombre = $request->input('nombre');
-        $empleado->apellido_paterno = $request->input('apellido_paterno');
-        $empleado->apellido_materno = $request->input('apellido_materno');
-        $empleado->telefono = $request->input('telefono');
-        $empleado->correo = $request->input('correo');
-        $empleado->usuario = $request->input('usuario');
-        $empleado->contrasena = Hash::make($request->input('contrasena'));
-        $empleado->rol = $request->input('rol');
-        $empleado->estatus = $request->input('estatus');
-        $empleado->calle = $request->input('calle');
-        $empleado->numero = $request->input('numero');
-        $empleado->municipio = $request->input('municipio');
-        $empleado->codigo_postal = $request->input('codigo_postal');
-        $empleado->imagen = 'sin-imagen.jpg';
-        $empleado->save();
+        try {
+            $data = $request->except('imagen');
 
-        if ($request->hasFile('imagen')) {
-            $file = $request->file('imagen');
-            $nombre = 'empleado_' . $empleado->id . '.' . $file->getClientOriginalExtension();
-            $ruta = $file->storeAs('imagenes/empleados', $nombre, 'public');
-            $empleado->imagen = url('storage/' . $ruta);
-            $empleado->save();
+            if ($request->hasFile('imagen')) {
+                $archivo = $request->file('imagen');
+                $data['imagen'] = $archivo; // El cliente ya maneja attach
+            }
+
+            $this->client()->post('/api/empleados', $data, $this->token());
+        } catch (RuntimeException $exception) {
+            return back()->withErrors(['empleado' => $exception->getMessage()])->withInput();
         }
 
         return redirect('/empleado')->with('success', 'Empleado guardado exitosamente.');
     }
 
-    public function eliminar(Request $request)
+    public function editar(string $id)
     {
-        $id = $request->route('id');
-        $empleado = Empleado::find($id);
-        if (!$empleado) {
-            return redirect('/empleado')->with('error', 'Empleado no encontrado');
+        try {
+            $payload = $this->client()->get("/api/empleados/{$id}", $this->token());
+        } catch (RuntimeException $exception) {
+            return redirect('/empleado')->withErrors(['empleado' => $exception->getMessage()]);
         }
-        $empleado->estatus = 'Inactivo';
-        $empleado->save();
-        return redirect('/empleado')->with('success', 'Empleado eliminado');
+
+        $empleado = $this->normalizePayload($payload['empleado'] ?? null);
+
+        return view('empleado/edicion', compact('empleado'));
     }
 
-    public function mostrar(Request $request)
+    public function actualizar(Request $request, string $id)
     {
-        $id = $request->route('id');
-        $empleado = Empleado::find($id);
-        if (!$empleado) {
-            return redirect('/empleado')->with('error', 'Empleado no encontrado');
+        $data = $request->except('imagen');
+
+        if ($request->hasFile('imagen')) {
+            $archivo = $request->file('imagen');
+            $data['imagen'] = $archivo;
         }
-        return view('empleado/borrado', ['empleado' => $empleado]);
+
+        try {
+            $this->client()->put("/api/empleados/{$id}", $data, $this->token());
+        } catch (RuntimeException $exception) {
+            return back()->withErrors(['empleado' => $exception->getMessage()])->withInput();
+        }
+
+        return redirect('/empleado')->with('success', 'Empleado actualizado correctamente.');
+    }
+
+    public function mostrar(string $id)
+    {
+        try {
+            $payload = $this->client()->get("/api/empleados/{$id}", $this->token());
+        } catch (RuntimeException $exception) {
+            return redirect('/empleado')->withErrors(['empleado' => $exception->getMessage()]);
+        }
+
+        $empleado = $this->normalizePayload($payload['empleado'] ?? null);
+
+        return view('empleado/borrado', compact('empleado'));
+    }
+
+    public function eliminar(string $id)
+    {
+        try {
+            $payload = $this->client()->delete("/api/empleados/{$id}", $this->token());
+        } catch (RuntimeException $exception) {
+            return redirect('/empleado')->withErrors(['empleado' => $exception->getMessage()]);
+        }
+
+        return redirect('/empleado')->with('success', $payload['message'] ?? 'Empleado eliminado correctamente.');
     }
 }

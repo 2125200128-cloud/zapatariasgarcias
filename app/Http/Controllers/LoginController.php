@@ -3,10 +3,9 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use App\Models\Empleado;
+use RuntimeException;
 
-class LoginController extends Controller
+class LoginController extends ApiFrontController
 {
     public function mostrar()
     {
@@ -15,31 +14,32 @@ class LoginController extends Controller
 
     public function login(Request $request)
     {
-        $usuario = $request->input('usuario');
-        $password = $request->input('password');
-
-        $credenciales = [
-            'usuario' => $usuario,
-            'password' => $password,
-            'estatus' => 'Activo',
-        ];
-
-        if (Auth::guard('empleado')->attempt($credenciales, $request->boolean('remember'))) {
-            $request->session()->regenerate();
-            return redirect()->intended('/');
+        try {
+            $payload = $this->client()->login(
+                (string) $request->input('usuario', ''),
+                (string) $request->input('password', '')
+            );
+        } catch (RuntimeException $exception) {
+            return back()->withErrors(['usuario' => $exception->getMessage()])->onlyInput('usuario');
         }
 
-        $empleado = Empleado::where('usuario', $usuario)->first();
-        if ($empleado && $empleado->estatus !== 'Activo') {
-            return back()->withErrors(['usuario' => 'Esta cuenta está inactiva.'])->onlyInput('usuario');
-        }
+        $request->session()->put('api_token', $payload['token'] ?? null);
+        $request->session()->put('api_user', $payload['user'] ?? null);
+        $request->session()->regenerate();
 
-        return back()->withErrors(['usuario' => 'Usuario o contraseña incorrectos.'])->onlyInput('usuario');
+        return redirect()->intended('/');
     }
 
     public function logout(Request $request)
     {
-        Auth::guard('empleado')->logout();
+        $token = $this->token();
+        if ($token) {
+            try {
+                $this->client()->logout($token);
+            } catch (RuntimeException $exception) {            }
+        }
+
+        $request->session()->forget(['api_token', 'api_user']);
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 

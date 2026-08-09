@@ -44,10 +44,6 @@ return [
             'provider' => 'users',
         ],
 
-        'empleado' => [
-            'driver' => 'session',
-            'provider' => 'empleados',
-        ],
     ],
 
     /*
@@ -68,15 +64,11 @@ return [
     */
 
     'providers' => [
-        'users' => [
-            'driver' => 'eloquent',
-            'model' => env('AUTH_MODEL', User::class),
-        ],
+        // 'users' => [
+        //     'driver' => 'eloquent',
+        //     'model' => env('AUTH_MODEL', User::class),
+        // ],
 
-        'empleados' => [
-            'driver' => 'eloquent',
-            'model' => Empleado::class,
-        ],
 
         // 'users' => [
         //     'driver' => 'database',

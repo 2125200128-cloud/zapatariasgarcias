@@ -2,29 +2,48 @@
 
 @section('dinamico')
 
-<h1 class="text-2xl font-semibold text-gray-800 mb-4">Editar pedido</h1>
+<div class="max-w-3xl rounded-lg bg-white p-6 shadow">
+    <div class="mb-6 flex items-center justify-between">
+        <div>
+            <h1 class="text-2xl font-semibold text-gray-800">Editar pedido</h1>
+            <p class="text-sm text-gray-500">Actualiza la información del pedido en la API.</p>
+        </div>
+        <a href="{{ url('/pedido') }}" class="rounded-lg border border-gray-300 px-4 py-2 text-sm text-gray-600 hover:bg-gray-50">Volver</a>
+    </div>
 
-<div class="bg-white rounded-lg shadow p-6 max-w-3xl">
-    <form action="{{ url('/pedido/actualizar/' . $pedido->id) }}" method="POST">
+    @if ($errors->any())
+        <div class="mb-4 p-3 rounded-lg bg-red-50 border border-red-200 text-sm text-red-700">
+            <ul class="list-disc list-inside space-y-0.5">
+                @foreach ($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
+        </div>
+    @endif
+
+    <form action="{{ url('/pedido/actualizar/' . data_get($pedido, 'id', '')) }}" method="POST">
         @csrf
 
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
             <div>
-                <label for="sucursal_id" class="block text-sm font-medium text-gray-700 mb-1">Sucursal que solicita</label>
-                <select name="sucursal_id" id="sucursal_id" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Sucursal que solicita</label>
+                <select name="sucursal_id" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" required>
                     <option value="">-- Selecciona --</option>
                     @foreach ($sucursales ?? [] as $sucursal)
-                        <option value="{{ $sucursal->id }}" @selected(optional($sucursalActual)->id == $sucursal->id)>{{ $sucursal->nombre }}</option>
+                        <option value="{{ data_get($sucursal, 'id', '') }}" 
+                            {{ old('sucursal_id', data_get($pedido, 'sucursal.id', '')) == data_get($sucursal, 'id', '') ? 'selected' : '' }}>
+                            {{ data_get($sucursal, 'nombre', 'Sucursal') }}
+                        </option>
                     @endforeach
                 </select>
             </div>
 
             <div>
-                <label for="estatus" class="block text-sm font-medium text-gray-700 mb-1">Estatus</label>
-                <select name="estatus" id="estatus" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    <option value="Pendiente" @selected($pedido->estatus === 'Pendiente')>Pendiente</option>
-                    <option value="Realizado" @selected($pedido->estatus === 'Realizado')>Realizado</option>
-                    <option value="Cancelado" @selected($pedido->estatus === 'Cancelado')>Cancelado</option>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Estatus</label>
+                <select name="estatus" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
+                    <option value="Pendiente" {{ old('estatus', data_get($pedido, 'estatus', '')) === 'Pendiente' ? 'selected' : '' }}>Pendiente</option>
+                    <option value="Realizado" {{ old('estatus', data_get($pedido, 'estatus', '')) === 'Realizado' ? 'selected' : '' }}>Realizado</option>
+                    <option value="Cancelado" {{ old('estatus', data_get($pedido, 'estatus', '')) === 'Cancelado' ? 'selected' : '' }}>Cancelado</option>
                 </select>
             </div>
         </div>
@@ -32,26 +51,31 @@
         <h2 class="text-sm font-semibold text-gray-700 mb-2">Productos solicitados</h2>
 
         <div id="filasProductos" class="space-y-2 mb-2">
-            @forelse ($pedido->detallePedidos as $detalle)
+            @forelse (data_get($pedido, 'detallePedidos', []) as $detalle)
                 <div class="fila-producto flex gap-2">
-                    <select name="producto_id[]" class="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <select name="producto_id[]" class="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm">
                         <option value="">-- Producto --</option>
                         @foreach ($productos ?? [] as $producto)
-                            <option value="{{ $producto->id }}" @selected($detalle->producto_id == $producto->id)>{{ $producto->nombre }} ({{ $producto->talla }})</option>
+                            <option value="{{ data_get($producto, 'id', '') }}" 
+                                {{ old('producto_id.' . $loop->parent->index, data_get($detalle, 'producto_id', '')) == data_get($producto, 'id', '') ? 'selected' : '' }}>
+                                {{ data_get($producto, 'nombre', 'Producto') }} ({{ data_get($producto, 'talla', '—') }})
+                            </option>
                         @endforeach
                     </select>
-                    <input type="number" name="cantidad[]" min="1" value="{{ $detalle->cantidad_solicitada }}" placeholder="Cantidad" class="w-32 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <input type="number" name="cantidad[]" min="1" 
+                        value="{{ old('cantidad.' . $loop->index, data_get($detalle, 'cantidad_solicitada', '')) }}" 
+                        placeholder="Cantidad" class="w-32 border border-gray-300 rounded-lg px-3 py-2 text-sm">
                     <button type="button" class="quitar-fila px-3 rounded-lg border border-gray-300 text-gray-500 hover:bg-gray-50">×</button>
                 </div>
             @empty
                 <div class="fila-producto flex gap-2">
-                    <select name="producto_id[]" class="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <select name="producto_id[]" class="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm">
                         <option value="">-- Producto --</option>
                         @foreach ($productos ?? [] as $producto)
-                            <option value="{{ $producto->id }}">{{ $producto->nombre }} ({{ $producto->talla }})</option>
+                            <option value="{{ data_get($producto, 'id', '') }}">{{ data_get($producto, 'nombre', 'Producto') }} ({{ data_get($producto, 'talla', '—') }})</option>
                         @endforeach
                     </select>
-                    <input type="number" name="cantidad[]" min="1" placeholder="Cantidad" class="w-32 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <input type="number" name="cantidad[]" min="1" placeholder="Cantidad" class="w-32 border border-gray-300 rounded-lg px-3 py-2 text-sm">
                     <button type="button" class="quitar-fila px-3 rounded-lg border border-gray-300 text-gray-500 hover:bg-gray-50">×</button>
                 </div>
             @endforelse
@@ -59,7 +83,8 @@
 
         <button type="button" id="agregarProducto" class="text-blue-600 text-sm hover:underline mb-6">+ Agregar producto</button>
 
-        <div>
+        <div class="flex justify-end gap-3">
+            <a href="{{ url('/pedido') }}" class="rounded-lg border border-gray-300 px-4 py-2 text-sm text-gray-600 hover:bg-gray-50">Cancelar</a>
             <button type="submit" class="bg-blue-600 text-white px-5 py-2 rounded-lg text-sm hover:bg-blue-700">Guardar cambios</button>
         </div>
     </form>

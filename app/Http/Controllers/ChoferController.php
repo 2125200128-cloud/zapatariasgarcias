@@ -3,15 +3,19 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Models\Chofer;
+use RuntimeException;
 
-class ChoferController extends Controller
+class ChoferController extends ApiFrontController
 {
     public function inicio()
     {
-        $choferes = Chofer::with(['trayectos' => function ($query) {
-            $query->whereNotIn('estatus', ['Entregado', 'Cancelado'])->with('carro');
-        }])->get();
+        try {
+            $payload = $this->client()->get('/api/choferes', $this->token());
+        } catch (RuntimeException $exception) {
+            return redirect('/login')->withErrors(['usuario' => $exception->getMessage()]);
+        }
+
+        $choferes = $this->normalizeCollection($payload['choferes'] ?? []);
 
         return view('chofer/inicio', compact('choferes'));
     }
@@ -21,79 +25,76 @@ class ChoferController extends Controller
         return view('chofer/formulario');
     }
 
-    public function editar(Request $request)
-    {
-        $id = $request->route('id');
-        $chofer = Chofer::find($id);
-        if (!$chofer) {
-            return redirect('/chofer')->with('error', 'Chofer no encontrado');
-        }
-        return view('chofer/edicion', ['chofer' => $chofer]);
-    }
-
-    public function actualizar(Request $request)
-    {
-        $id = $request->route('id');
-        $chofer = Chofer::find($id);
-        if (!$chofer) {
-            return redirect('/chofer')->with('error', 'Chofer no encontrado');
-        }
-        $chofer->nombre = $request->input('nombre');
-        $chofer->apellido = $request->input('apellido');
-        $chofer->contacto = $request->input('contacto');
-        $chofer->estatus = $request->input('estatus');
-        $chofer->save();
-
-        if ($request->hasFile('imagen')) {
-            $file = $request->file('imagen');
-            $nombre = 'chofer_' . $chofer->id . '.' . $file->getClientOriginalExtension();
-            $ruta = $file->storeAs('imagenes/choferes', $nombre, 'public');
-            $chofer->imagen = url('storage/' . $ruta);
-            $chofer->save();
-        }
-
-        return redirect('/chofer')->with('success', 'Chofer actualizado');
-    }
-
     public function guardar(Request $request)
     {
-        $chofer = new Chofer();
-        $chofer->nombre = $request->input('nombre');
-        $chofer->apellido = $request->input('apellido');
-        $chofer->contacto = $request->input('contacto');
-        $chofer->estatus = $request->input('estatus');
-        $chofer->save();
+        $data = $request->except('imagen');
 
         if ($request->hasFile('imagen')) {
-            $file = $request->file('imagen');
-            $nombre = 'chofer_' . $chofer->id . '.' . $file->getClientOriginalExtension();
-            $ruta = $file->storeAs('imagenes/choferes', $nombre, 'public');
-            $chofer->imagen = url('storage/' . $ruta);
-            $chofer->save();
+            $archivo = $request->file('imagen');
+            $data['imagen'] = $archivo;
+        }
+
+        try {
+            $this->client()->post('/api/choferes', $data, $this->token());
+        } catch (RuntimeException $exception) {
+            return back()->withErrors(['chofer' => $exception->getMessage()])->withInput();
         }
 
         return redirect('/chofer')->with('success', 'Chofer guardado exitosamente.');
     }
 
-    public function eliminar(Request $request)
+    public function editar(string $id)
     {
-        $id = $request->route('id');
-        $chofer = Chofer::find($id);
-        if (!$chofer) {
-            return redirect('/chofer')->with('error', 'Chofer no encontrado');
+        try {
+            $payload = $this->client()->get("/api/choferes/{$id}", $this->token());
+        } catch (RuntimeException $exception) {
+            return redirect('/chofer')->withErrors(['chofer' => $exception->getMessage()]);
         }
-        $chofer->estatus = 'Inactivo';
-        $chofer->save();
-        return redirect('/chofer')->with('success', 'Chofer eliminado');
+
+        $chofer = $this->normalizePayload($payload['chofer'] ?? null);
+
+        return view('chofer/edicion', compact('chofer'));
     }
 
-    public function mostrar(Request $request)
+    public function actualizar(Request $request, string $id)
     {
-        $id = $request->route('id');
-        $chofer = Chofer::find($id);
-        if (!$chofer) {
-            return redirect('/chofer')->with('error', 'Chofer no encontrado');
+        $data = $request->except('imagen');
+
+        if ($request->hasFile('imagen')) {
+            $archivo = $request->file('imagen');
+            $data['imagen'] = $archivo;
         }
-        return view('chofer/borrado', ['chofer' => $chofer]);
+
+        try {
+            $this->client()->put("/api/choferes/{$id}", $data, $this->token());
+        } catch (RuntimeException $exception) {
+            return back()->withErrors(['chofer' => $exception->getMessage()])->withInput();
+        }
+
+        return redirect('/chofer')->with('success', 'Chofer actualizado correctamente.');
+    }
+
+    public function mostrar(string $id)
+    {
+        try {
+            $payload = $this->client()->get("/api/choferes/{$id}", $this->token());
+        } catch (RuntimeException $exception) {
+            return redirect('/chofer')->withErrors(['chofer' => $exception->getMessage()]);
+        }
+
+        $chofer = $this->normalizePayload($payload['chofer'] ?? null);
+
+        return view('chofer/borrado', compact('chofer'));
+    }
+
+    public function eliminar(string $id)
+    {
+        try {
+            $payload = $this->client()->delete("/api/choferes/{$id}", $this->token());
+        } catch (RuntimeException $exception) {
+            return redirect('/chofer')->withErrors(['chofer' => $exception->getMessage()]);
+        }
+
+        return redirect('/chofer')->with('success', $payload['message'] ?? 'Chofer eliminado correctamente.');
     }
 }

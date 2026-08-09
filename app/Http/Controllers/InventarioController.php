@@ -3,129 +3,121 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Models\Empleado;
-use App\Models\Inventario;
-use App\Models\Sucursal;
-use App\Models\Producto;
+use RuntimeException;
 
-class InventarioController extends Controller
+class InventarioController extends ApiFrontController
 {
-    // El inventario es cosa de la matriz (Administrador o el Encargado de la
-    // matriz) — una sucursal no registra ni edita inventario, el suyo se
-    // abona solo al confirmar la llegada de un trayecto.
-    private function puedeAsignar(): bool
-    {
-        $empleado = Empleado::auth();
-        return $empleado !== null && ($empleado->esAdministrador() || $empleado->esMatriz());
-    }
-
     public function inicio()
     {
-        $query = Inventario::with(['sucursal', 'producto.marca']);
-
-        // La matriz ve todo; una sucursal solo ve su propio stock (de solo
-        // lectura — registrar/editar sigue siendo exclusivo de la matriz).
-        if (!$this->puedeAsignar()) {
-            $miSucursal = Empleado::auth()?->miSucursal();
-            $query->where('sucursal_id', $miSucursal?->id ?? 0);
+        try {
+            $payload = $this->client()->get('/api/inventarios', $this->token());
+        } catch (RuntimeException $exception) {
+            return redirect('/login')->withErrors(['usuario' => $exception->getMessage()]);
         }
 
-        $inventarios = $query->get();
+        $inventarios = $this->normalizeCollection($payload['inventarios'] ?? []);
+        $puedeGestionar = $this->puedeGestionar();
 
-        return view('inventario/inicio', compact('inventarios'));
+        return view('inventario/inicio', compact('inventarios', 'puedeGestionar'));
     }
 
     public function formulario()
     {
-        if (!$this->puedeAsignar()) {
+        if (!$this->puedeGestionar()) {
             abort(403, 'El inventario solo lo gestiona la matriz.');
         }
 
-        $sucursales = Sucursal::all();
-        $productos = Producto::with('marca')->get();
+        try {
+            $payload = $this->client()->get('/api/inventarios/datos-formulario', $this->token());
+        } catch (RuntimeException $exception) {
+            return redirect('/inventario')->withErrors(['inventario' => $exception->getMessage()]);
+        }
+
+        $sucursales = $this->normalizeCollection($payload['sucursales'] ?? []);
+        $productos = $this->normalizeCollection($payload['productos'] ?? []);
 
         return view('inventario/formulario', compact('sucursales', 'productos'));
     }
 
-    public function editar(Request $request)
-    {
-        if (!$this->puedeAsignar()) {
-            abort(403, 'El inventario solo lo gestiona la matriz.');
-        }
-
-        $id = $request->route('id');
-        $inventario = Inventario::find($id);
-        if (!$inventario) {
-            return redirect('/inventario')->with('error', 'Registro no encontrado');
-        }
-        $sucursales = Sucursal::all();
-        $productos = Producto::with('marca')->get();
-
-        return view('inventario/edicion', compact('inventario', 'sucursales', 'productos'));
-    }
-
-    public function actualizar(Request $request)
-    {
-        if (!$this->puedeAsignar()) {
-            abort(403, 'El inventario solo lo gestiona la matriz.');
-        }
-
-        $id = $request->route('id');
-        $inventario = Inventario::find($id);
-        if (!$inventario) {
-            return redirect('/inventario')->with('error', 'Registro no encontrado');
-        }
-        $inventario->sucursal_id = $request->input('sucursal_id');
-        $inventario->producto_id = $request->input('producto_id');
-        $inventario->stock = $request->input('stock');
-        $inventario->estatus = $request->input('estatus');
-        $inventario->save();
-
-        return redirect('/inventario')->with('success', 'Registro actualizado');
-    }
-
     public function guardar(Request $request)
     {
-        if (!$this->puedeAsignar()) {
+        if (!$this->puedeGestionar()) {
             abort(403, 'El inventario solo lo gestiona la matriz.');
         }
 
-        $inventario = new Inventario();
-        $inventario->sucursal_id = $request->input('sucursal_id');
-        $inventario->producto_id = $request->input('producto_id');
-        $inventario->stock = $request->input('stock');
-        $inventario->estatus = $request->input('estatus');
-        $inventario->save();
+        try {
+            $this->client()->post('/api/inventarios', $request->all(), $this->token());
+        } catch (RuntimeException $exception) {
+            return back()->withErrors(['inventario' => $exception->getMessage()])->withInput();
+        }
 
         return redirect('/inventario')->with('success', 'Registro guardado exitosamente.');
     }
 
-    public function eliminar(Request $request)
+    public function editar(string $id)
     {
-        if (!$this->puedeAsignar()) {
+        if (!$this->puedeGestionar()) {
             abort(403, 'El inventario solo lo gestiona la matriz.');
         }
 
-        $id = $request->route('id');
-        $inventario = Inventario::find($id);
-        if (!$inventario) {
-            return redirect('/inventario')->with('error', 'Registro no encontrado');
+        try {
+            $resInventario = $this->client()->get("/api/inventarios/{$id}", $this->token());
+            $inventario = $this->normalizePayload($resInventario['inventario'] ?? null);
+
+            $resDatos = $this->client()->get('/api/inventarios/datos-formulario', $this->token());
+            $sucursales = $this->normalizeCollection($resDatos['sucursales'] ?? []);
+            $productos = $this->normalizeCollection($resDatos['productos'] ?? []);
+        } catch (RuntimeException $exception) {
+            return redirect('/inventario')->withErrors(['inventario' => $exception->getMessage()]);
         }
-        $inventario->delete();
-        return redirect('/inventario')->with('success', 'Registro eliminado');
+
+        return view('inventario/edicion', compact('inventario', 'sucursales', 'productos'));
     }
 
-    public function mostrar(Request $request)
+    public function actualizar(Request $request, string $id)
     {
-        if (!$this->puedeAsignar()) {
+        if (!$this->puedeGestionar()) {
             abort(403, 'El inventario solo lo gestiona la matriz.');
         }
 
-        $id = $request->route('id');
-        $inventario = Inventario::find($id);
-        if (!$inventario) {
-            return redirect('/inventario')->with('error', 'Registro no encontrado');
+        try {
+            $this->client()->put("/api/inventarios/{$id}", $request->all(), $this->token());
+        } catch (RuntimeException $exception) {
+            return back()->withErrors(['inventario' => $exception->getMessage()])->withInput();
         }
-        return view('inventario/borrado', ['inventario' => $inventario]);
+
+        return redirect('/inventario')->with('success', 'Registro actualizado correctamente.');
+    }
+
+    public function mostrar(string $id)
+    {
+        if (!$this->puedeGestionar()) {
+            abort(403, 'El inventario solo lo gestiona la matriz.');
+        }
+
+        try {
+            $payload = $this->client()->get("/api/inventarios/{$id}", $this->token());
+        } catch (RuntimeException $exception) {
+            return redirect('/inventario')->withErrors(['inventario' => $exception->getMessage()]);
+        }
+
+        $inventario = $this->normalizePayload($payload['inventario'] ?? null);
+
+        return view('inventario/borrado', compact('inventario'));
+    }
+
+    public function eliminar(string $id)
+    {
+        if (!$this->puedeGestionar()) {
+            abort(403, 'El inventario solo lo gestiona la matriz.');
+        }
+
+        try {
+            $payload = $this->client()->delete("/api/inventarios/{$id}", $this->token());
+        } catch (RuntimeException $exception) {
+            return redirect('/inventario')->withErrors(['inventario' => $exception->getMessage()]);
+        }
+
+        return redirect('/inventario')->with('success', $payload['message'] ?? 'Registro eliminado correctamente.');
     }
 }

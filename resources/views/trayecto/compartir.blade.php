@@ -2,26 +2,28 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
+    <title>Compartir ubicación — Trayecto #{{ data_get($trayecto, 'id', '—') }}</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>Compartir ubicación — Trayecto #{{ $trayecto->id }}</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 <body class="bg-gray-100 min-h-screen flex items-center justify-center p-4">
 
     <div class="bg-white rounded-lg shadow p-6 w-full max-w-sm">
-        <h1 class="text-xl font-semibold mb-1 text-center">Trayecto #{{ $trayecto->id }}</h1>
-        <p class="text-gray-500 mb-4 text-center">Pedido #{{ $trayecto->pedido_id }} — {{ $trayecto->estatus }}</p>
+        <h1 class="text-xl font-semibold mb-1 text-center">Trayecto #{{ data_get($trayecto, 'id', '—') }}</h1>
+        <p class="text-gray-500 mb-4 text-center">
+            Pedido #{{ data_get($trayecto, 'pedido_id', '—') }} — {{ data_get($trayecto, 'estatus', '—') }}
+        </p>
 
         @if ($yaTermino)
             <p class="text-sm text-gray-600 text-center">
-                Este trayecto ya está <strong>{{ $trayecto->estatus }}</strong> — ya no se puede compartir ubicación.
+                Este trayecto ya está <strong>{{ data_get($trayecto, 'estatus', '—') }}</strong> — ya no se puede compartir ubicación.
             </p>
         @else
             <div id="avisoInseguro" class="hidden bg-amber-50 border border-amber-200 rounded-lg p-3 mb-4 text-xs text-amber-800">
                 Tu navegador está bloqueando la ubicación porque esta página no se abrió por HTTPS (ni es
-                "localhost"). Los celulares no comparten el GPS en conexiones sin HTTPS — hay que abrir este link
-                desde una dirección https:// para que funcione.
+                "localhost"). Los celulares no comparten el GPS en conexiones sin HTTPS — abre este link
+                desde una dirección segura (https://) para que funcione.
             </div>
 
             <div class="bg-gray-50 border border-gray-200 rounded-lg p-3 mb-4 text-xs text-gray-600 space-y-2">
@@ -64,13 +66,9 @@
         const estado = document.getElementById('estadoTexto');
         const avisoInseguro = document.getElementById('avisoInseguro');
 
-        if (!btn) {
-            return;
-        }
+        if (!btn) return;
 
-        // Los navegadores solo dan acceso al GPS en HTTPS (o en "localhost").
-        // Se avisa esto de una vez, en vez de dejar que el botón falle en
-        // silencio sin explicar por qué.
+        // Aviso si no hay HTTPS
         if (!window.isSecureContext) {
             avisoInseguro.classList.remove('hidden');
             checkbox.disabled = true;
@@ -93,6 +91,10 @@
         });
 
         function enviarPosicion(lat, lng) {
+            if (!urlUbicacion) {
+                estado.textContent = 'No se configuró la URL de envío.';
+                return;
+            }
             fetch(urlUbicacion, {
                 method: 'POST',
                 headers: {
@@ -102,19 +104,17 @@
                 },
                 body: JSON.stringify({ latitud: lat, longitud: lng }),
             })
-                .then(res => {
-                    if (!res.ok) throw new Error('Error al enviar ubicación');
-                    estado.textContent = 'Compartiendo ubicación… última actualización: ' + new Date().toLocaleTimeString();
-                })
-                .catch(() => {
-                    estado.textContent = 'No se pudo enviar la ubicación, reintentando…';
-                });
+            .then(res => {
+                if (!res.ok) throw new Error('Error al enviar ubicación');
+                estado.textContent = 'Compartiendo ubicación… última actualización: ' + new Date().toLocaleTimeString();
+            })
+            .catch(() => {
+                estado.textContent = 'No se pudo enviar la ubicación, reintentando…';
+            });
         }
 
         function iniciarCompartir() {
-            if (!checkbox.checked) {
-                return;
-            }
+            if (!checkbox.checked) return;
 
             if (!navigator.geolocation) {
                 estado.textContent = 'Este dispositivo no soporta geolocalización.';

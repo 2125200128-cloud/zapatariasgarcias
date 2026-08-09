@@ -3,109 +3,99 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Models\Sucursal;
-use App\Models\Empleado;
+use RuntimeException;
 
-class SucursalController extends Controller
+class SucursalController extends ApiFrontController
 {
     public function inicio()
     {
-        $sucursales = Sucursal::with('empleado')->get();
+        try {
+            $payload = $this->client()->get('/api/sucursales', $this->token());
+        } catch (RuntimeException $exception) {
+            return redirect('/login')->withErrors(['usuario' => $exception->getMessage()]);
+        }
+
+        $sucursales = $this->normalizeCollection($payload['sucursales'] ?? []);
 
         return view('sucursal/inicio', compact('sucursales'));
     }
 
     public function formulario()
     {
-        $empleados = Empleado::all();
-
-        return view('sucursal/formulario', compact('empleados'));
-    }
-
-    public function editar(Request $request)
-    {
-        $id = $request->route('id');
-        $sucursal = Sucursal::find($id);
-        if (!$sucursal) {
-            return redirect('/sucursal')->with('error', 'Sucursal no encontrada');
-        }
-        $empleados = Empleado::all();
-
-        return view('sucursal/edicion', compact('sucursal', 'empleados'));
-    }
-
-    public function actualizar(Request $request)
-    {
-        $id = $request->route('id');
-        $sucursal = Sucursal::find($id);
-        if (!$sucursal) {
-            return redirect('/sucursal')->with('error', 'Sucursal no encontrada');
-        }
-        $sucursal->nombre = $request->input('nombre');
-        $sucursal->empleado_id = $request->input('empleado_id');
-        $sucursal->calle = $request->input('calle');
-        $sucursal->numero = $request->input('numero');
-        $sucursal->municipio = $request->input('municipio');
-        $sucursal->codigo_postal = $request->input('codigo_postal');
-        $sucursal->contacto = $request->input('contacto');
-        $sucursal->estatus = $request->input('estatus');
-        $sucursal->save();
-
-        if ($request->hasFile('imagen')) {
-            $file = $request->file('imagen');
-            $nombre = 'sucursal_' . $sucursal->id . '.' . $file->getClientOriginalExtension();
-            $ruta = $file->storeAs('imagenes/sucursales', $nombre, 'public');
-            $sucursal->imagen = url('storage/' . $ruta);
-            $sucursal->save();
-        }
-
-        return redirect('/sucursal')->with('success', 'Sucursal actualizada');
+       
+        return view('sucursal/formulario');
     }
 
     public function guardar(Request $request)
     {
-        $sucursal = new Sucursal();
-        $sucursal->nombre = $request->input('nombre');
-        $sucursal->empleado_id = $request->input('empleado_id');
-        $sucursal->calle = $request->input('calle');
-        $sucursal->numero = $request->input('numero');
-        $sucursal->municipio = $request->input('municipio');
-        $sucursal->codigo_postal = $request->input('codigo_postal');
-        $sucursal->contacto = $request->input('contacto');
-        $sucursal->estatus = $request->input('estatus');
-        $sucursal->imagen = 'sin-imagen.jpg';
-        $sucursal->save();
+        $data = $request->except('imagen');
 
         if ($request->hasFile('imagen')) {
-            $file = $request->file('imagen');
-            $nombre = 'sucursal_' . $sucursal->id . '.' . $file->getClientOriginalExtension();
-            $ruta = $file->storeAs('imagenes/sucursales', $nombre, 'public');
-            $sucursal->imagen = url('storage/' . $ruta);
-            $sucursal->save();
+            $archivo = $request->file('imagen');
+            $data['imagen'] = $archivo;
+        }
+
+        try {
+            $this->client()->post('/api/sucursales', $data, $this->token());
+        } catch (RuntimeException $exception) {
+            return back()->withErrors(['sucursal' => $exception->getMessage()])->withInput();
         }
 
         return redirect('/sucursal')->with('success', 'Sucursal guardada exitosamente.');
     }
 
-    public function eliminar(Request $request)
+    public function editar(string $id)
     {
-        $id = $request->route('id');
-        $sucursal = Sucursal::find($id);
-        if (!$sucursal) {
-            return redirect('/sucursal')->with('error', 'Sucursal no encontrada');
+        try {
+            $payload = $this->client()->get("/api/sucursales/{$id}", $this->token());
+        } catch (RuntimeException $exception) {
+            return redirect('/sucursal')->withErrors(['sucursal' => $exception->getMessage()]);
         }
-        $sucursal->estatus = 'Inactivo';
-        $sucursal->save();
-        return redirect('/sucursal')->with('success', 'Sucursal eliminada');
+
+        $sucursal = $this->normalizePayload($payload['sucursal'] ?? null);
+
+        return view('sucursal/edicion', compact('sucursal'));
     }
 
-    public function mostrar(Request $request)
+    public function actualizar(Request $request, string $id)
     {
-        $id = $request->route('id');
-        $sucursal = Sucursal::find($id);
-        if (!$sucursal) {
-            return redirect('/sucursal')->with('error', 'Sucursal no encontrada');
+        $data = $request->except('imagen');
+
+        if ($request->hasFile('imagen')) {
+            $archivo = $request->file('imagen');
+            $data['imagen'] = $archivo;
         }
-        return view('sucursal/borrado', ['sucursal' => $sucursal]);
+
+        try {
+            $this->client()->put("/api/sucursales/{$id}", $data, $this->token());
+        } catch (RuntimeException $exception) {
+            return back()->withErrors(['sucursal' => $exception->getMessage()])->withInput();
+        }
+
+        return redirect('/sucursal')->with('success', 'Sucursal actualizada correctamente.');
+    }
+
+    public function mostrar(string $id)
+    {
+        try {
+            $payload = $this->client()->get("/api/sucursales/{$id}", $this->token());
+        } catch (RuntimeException $exception) {
+            return redirect('/sucursal')->withErrors(['sucursal' => $exception->getMessage()]);
+        }
+
+        $sucursal = $this->normalizePayload($payload['sucursal'] ?? null);
+
+        return view('sucursal/borrado', compact('sucursal'));
+    }
+
+    public function eliminar(string $id)
+    {
+        try {
+            $payload = $this->client()->delete("/api/sucursales/{$id}", $this->token());
+        } catch (RuntimeException $exception) {
+            return redirect('/sucursal')->withErrors(['sucursal' => $exception->getMessage()]);
+        }
+
+        return redirect('/sucursal')->with('success', $payload['message'] ?? 'Sucursal eliminada correctamente.');
     }
 }

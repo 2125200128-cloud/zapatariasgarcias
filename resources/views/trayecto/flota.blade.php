@@ -47,10 +47,6 @@ document.addEventListener("DOMContentLoaded", () => {
     const marcadores = {}; // trayecto_id -> { chofer, destino, linea }
     const rutasCache = {}; // municipio -> [[lat,lng], ...] | 'error'
 
-    // Ruta real por carretera (OSRM, servidor público, sin API key) entre la
-    // matriz y un destino. Se cachea por municipio: solo hay 5 destinos
-    // posibles, así que como mucho se pide una vez cada uno, nunca en cada
-    // sondeo. Si falla, se deja la línea recta como respaldo.
     function obtenerRutaCarretera(destino, callback) {
         if (rutasCache[destino.municipio]) {
             callback(rutasCache[destino.municipio] === 'error' ? null : rutasCache[destino.municipio]);
@@ -62,7 +58,7 @@ document.addEventListener("DOMContentLoaded", () => {
         fetch(url)
             .then(res => res.json())
             .then(data => {
-                if (data.code !== 'Ok' || !data.routes || !data.routes[0]) {
+                if (data.code !== 'Ok' || !data.routes?.[0]) {
                     throw new Error('OSRM sin ruta');
                 }
                 const puntos = data.routes[0].geometry.coordinates.map(([lng, lat]) => [lat, lng]);
@@ -76,14 +72,14 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     function actualizar() {
-        fetch('{{ url('/trayecto/flota/ubicaciones') }}', { headers: { 'Accept': 'application/json' } })
+        fetch('{{ url('/trayecto/flota/ubicaciones')}}', { headers: { 'Accept': 'application/json' } })
             .then(res => res.json())
             .then(trayectos => {
                 document.getElementById('mapaFlotaVacio').classList.toggle('hidden', trayectos.length > 0);
 
                 const activos = new Set(trayectos.map(t => t.trayecto_id));
 
-                // Quitar marcadores de trayectos que ya no están activos (entregados/cancelados)
+                // Quitar marcadores de trayectos que ya no están activos
                 Object.keys(marcadores).forEach(id => {
                     if (!activos.has(Number(id))) {
                         const grupo = marcadores[id];
@@ -107,8 +103,6 @@ document.addEventListener("DOMContentLoaded", () => {
                             .addTo(mapa)
                             .bindPopup(`<strong>${t.destino.sucursal}</strong><br>${t.destino.municipio}`);
 
-                        // Línea recta como respaldo inmediato mientras llega
-                        // la ruta real por carretera de OSRM.
                         grupo.linea = L.polyline(
                             [[matriz.lat, matriz.lng], [t.destino.lat, t.destino.lng]],
                             { color: '#9ca3af', dashArray: '6 6', weight: 2 }

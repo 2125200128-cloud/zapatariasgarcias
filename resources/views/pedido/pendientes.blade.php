@@ -35,18 +35,25 @@
         <tbody class="divide-y divide-gray-100">
             @forelse ($pedidos ?? [] as $pedido)
                 <tr>
-                    <td class="px-4 py-3">{{ $pedido->id }}</td>
-                    <td class="px-4 py-3">{{ optional($pedido->empleado?->sucursales->first())->nombre ?? '—' }}</td>
-                    <td class="px-4 py-3">{{ $pedido->fecha }}</td>
+                    <td class="px-4 py-3">{{ data_get($pedido, 'id', '—') }}</td>
+                    <td class="px-4 py-3">{{ data_get($pedido, 'sucursal.nombre', '—') }}</td>
+                    <td class="px-4 py-3">{{ data_get($pedido, 'fecha', '—') }}</td>
                     <td class="px-4 py-3">
                         <ul class="space-y-0.5">
-                            @foreach ($pedido->detallePedidos as $detalle)
-                                <li>{{ $detalle->producto->nombre ?? '—' }} ({{ $detalle->producto->talla ?? '—' }}) × {{ $detalle->cantidad_solicitada }}</li>
-                            @endforeach
+                            @forelse (data_get($pedido, 'detallePedidos', []) as $detalle)
+                                <li>
+                                    {{ data_get($detalle, 'producto.nombre', '—') }}
+                                    ({{ data_get($detalle, 'producto.talla', '—') }})
+                                    × {{ data_get($detalle, 'cantidad_solicitada', '—') }}
+                                </li>
+                            @empty
+                                <li class="text-gray-500">Sin productos</li>
+                            @endforelse
                         </ul>
                     </td>
                     <td class="px-4 py-3 whitespace-nowrap">
-                        <a href="{{ url('/pedido/' . $pedido->id . '/aceptar') }}" class="bg-blue-600 text-white px-3 py-1.5 rounded-lg text-sm hover:bg-blue-700">
+                        <a href="{{ url('/pedido/' . data_get($pedido, 'id', '') . '/aceptar') }}" 
+                           class="bg-blue-600 text-white px-3 py-1.5 rounded-lg text-sm hover:bg-blue-700">
                             Aceptar y asignar
                         </a>
                     </td>

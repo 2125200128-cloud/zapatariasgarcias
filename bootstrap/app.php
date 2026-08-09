@@ -4,6 +4,8 @@ use App\Http\Middleware\CambiarConexionBaseDatos;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use App\Http\Middleware\ApiAuthenticated;
+use App\Http\Middleware\EsAdministrador;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -12,13 +14,11 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        // alias api.auth to the ApiAuthenticated middleware
         $middleware->alias([
-            'admin' => \App\Http\Middleware\EsAdministrador::class,
-            'cambiar_conexion' => CambiarConexionBaseDatos::class,
+            'api.auth' => ApiAuthenticated::class,
+            'es.admin' => EsAdministrador::class
         ]);
-
-        // Esto hace que se ejecute automáticamente en cada petición
-        $middleware->append(CambiarConexionBaseDatos::class);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

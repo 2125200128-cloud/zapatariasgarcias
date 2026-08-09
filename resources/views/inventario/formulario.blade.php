@@ -2,52 +2,68 @@
 
 @section('dinamico')
 
-<h1 class="text-2xl font-semibold text-gray-800 mb-4">Nuevo registro de inventario</h1>
+<div class="max-w-3xl rounded-lg bg-white p-6 shadow">
+    <div class="mb-6 flex items-center justify-between">
+        <div>
+            <h1 class="text-2xl font-semibold text-gray-800">Nuevo registro de inventario</h1>
+            <p class="text-sm text-gray-500">Agrega un nuevo registro de inventario en la API de ZAPATERIA_API.</p>
+        </div>
+        <a href="{{ url('/inventario') }}" class="rounded-lg border border-gray-300 px-4 py-2 text-sm text-gray-600 hover:bg-gray-50">Volver</a>
+    </div>
 
-<div class="bg-white rounded-lg shadow p-6 max-w-3xl">
-    <form action="{{ url('/inventario/guardar') }}" method="POST" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+    @if ($errors->any())
+        <div class="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+            {{ $errors->first() }}
+        </div>
+    @endif
+
+    <form action="{{ url('/inventario/guardar') }}" method="POST" class="grid gap-4 sm:grid-cols-2">
         @csrf
 
         <div>
-            <label for="sucursal_id" class="block text-sm font-medium text-gray-700 mb-1">Sucursal</label>
-            <select name="sucursal_id" id="sucursal_id" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Sucursal</label>
+            <select name="sucursal_id" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" required>
                 <option value="">-- Selecciona --</option>
                 @foreach ($sucursales ?? [] as $sucursal)
-                    <option value="{{ $sucursal->id }}">{{ $sucursal->nombre }}</option>
-                @endforeach
-            </select>
-        </div>
-
-        <div>
-            <label for="producto_id" class="block text-sm font-medium text-gray-700 mb-1">Producto</label>
-            <input type="text" id="productoBuscar" placeholder="Buscar por nombre, marca o talla..."
-                class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mb-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
-            <select name="producto_id" id="producto_id" size="8"
-                class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" required>
-                <option value="">-- Selecciona --</option>
-                @foreach ($productos ?? [] as $producto)
-                    <option value="{{ $producto->id }}"
-                        data-buscar="{{ strtolower($producto->nombre . ' ' . ($producto->marca->nombre ?? '') . ' ' . $producto->talla) }}">
-                        {{ $producto->nombre }} — {{ $producto->marca->nombre ?? 'Sin marca' }} (talla {{ $producto->talla }})
+                    <option value="{{ data_get($sucursal, 'id', '') }}" {{ old('sucursal_id') == data_get($sucursal, 'id', '') ? 'selected' : '' }}>
+                        {{ data_get($sucursal, 'nombre', 'Sucursal') }}
                     </option>
                 @endforeach
             </select>
         </div>
 
         <div>
-            <label for="stock" class="block text-sm font-medium text-gray-700 mb-1">Stock</label>
-            <input type="number" name="stock" id="stock" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" required>
-        </div>
-
-        <div>
-            <label for="estatus" class="block text-sm font-medium text-gray-700 mb-1">Estatus</label>
-            <select name="estatus" id="estatus" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-                <option value="Activo">Activo</option>
-                <option value="Inactivo">Inactivo</option>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Producto</label>
+            <input type="text" id="productoBuscar" placeholder="Buscar por nombre, marca o talla..."
+                class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mb-2">
+            <select name="producto_id" id="producto_id" size="8"
+                class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" required>
+                <option value="">-- Selecciona --</option>
+                @foreach ($productos ?? [] as $producto)
+                    <option value="{{ data_get($producto, 'id', '') }}"
+                        data-buscar="{{ strtolower(data_get($producto, 'nombre', '') . ' ' . data_get($producto, 'marca.nombre', '') . ' ' . data_get($producto, 'talla', '')) }}"
+                        {{ old('producto_id') == data_get($producto, 'id', '') ? 'selected' : '' }}>
+                        {{ data_get($producto, 'nombre', 'Producto') }} — {{ data_get($producto, 'marca.nombre', 'Sin marca') }} (talla {{ data_get($producto, 'talla', '—') }})
+                    </option>
+                @endforeach
             </select>
         </div>
 
-        <div class="sm:col-span-2">
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Stock</label>
+            <input type="number" name="stock" value="{{ old('stock') }}" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" required>
+        </div>
+
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Estatus</label>
+            <select name="estatus" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
+                <option value="Activo" {{ old('estatus') === 'Activo' ? 'selected' : '' }}>Activo</option>
+                <option value="Inactivo" {{ old('estatus') === 'Inactivo' ? 'selected' : '' }}>Inactivo</option>
+            </select>
+        </div>
+
+        <div class="sm:col-span-2 flex justify-end gap-3">
+            <a href="{{ url('/inventario') }}" class="rounded-lg border border-gray-300 px-4 py-2 text-sm text-gray-600 hover:bg-gray-50">Cancelar</a>
             <button type="submit" class="bg-blue-600 text-white px-5 py-2 rounded-lg text-sm hover:bg-blue-700">Guardar</button>
         </div>
     </form>
@@ -61,9 +77,7 @@ document.addEventListener('DOMContentLoaded', () => {
     buscador.addEventListener('input', () => {
         const termino = buscador.value.trim().toLowerCase();
         Array.from(select.options).forEach(opcion => {
-            if (!opcion.value) {
-                return;
-            }
+            if (!opcion.value) return;
             opcion.style.display = opcion.dataset.buscar.includes(termino) ? '' : 'none';
         });
     });

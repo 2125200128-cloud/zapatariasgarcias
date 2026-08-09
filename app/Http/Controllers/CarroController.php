@@ -3,15 +3,19 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Models\Carro;
+use RuntimeException;
 
-class CarroController extends Controller
+class CarroController extends ApiFrontController
 {
     public function inicio()
     {
-        $carros = Carro::with(['trayectos' => function ($query) {
-            $query->whereNotIn('estatus', ['Entregado', 'Cancelado'])->with('chofer');
-        }])->get();
+        try {
+            $payload = $this->client()->get('/api/carros', $this->token());
+        } catch (RuntimeException $exception) {
+            return redirect('/login')->withErrors(['usuario' => $exception->getMessage()]);
+        }
+
+        $carros = $this->normalizeCollection($payload['carros'] ?? []);
 
         return view('carro/inicio', compact('carros'));
     }
@@ -21,82 +25,76 @@ class CarroController extends Controller
         return view('carro/formulario');
     }
 
-    public function editar(Request $request)
-    {
-        $id = $request->route('id');
-        $carro = Carro::find($id);
-        if (!$carro) {
-            return redirect('/carro')->with('error', 'Carro no encontrado');
-        }
-        return view('carro/edicion', ['carro' => $carro]);
-    }
-
-    public function actualizar(Request $request)
-    {
-        $id = $request->route('id');
-        $carro = Carro::find($id);
-        if (!$carro) {
-            return redirect('/carro')->with('error', 'Carro no encontrado');
-        }
-        $carro->placas = $request->input('placas');
-        $carro->marca = $request->input('marca');
-        $carro->color = $request->input('color');
-        $carro->capacidad = $request->input('capacidad');
-        $carro->dimenciones = $request->input('dimenciones');
-        $carro->estatus = $request->input('estatus');
-        $carro->save();
-
-        if ($request->hasFile('imagen')) {
-            $file = $request->file('imagen');
-            $nombre = 'carro_' . $carro->id . '.' . $file->getClientOriginalExtension();
-            $ruta = $file->storeAs('imagenes/carros', $nombre, 'public');
-            $carro->imagen = url('storage/' . $ruta);
-            $carro->save();
-        }
-
-        return redirect('/carro')->with('success', 'Carro actualizado');
-    }
-
     public function guardar(Request $request)
     {
-        $carro = new Carro();
-        $carro->placas = $request->input('placas');
-        $carro->marca = $request->input('marca');
-        $carro->color = $request->input('color');
-        $carro->capacidad = $request->input('capacidad');
-        $carro->dimenciones = $request->input('dimenciones');
-        $carro->estatus = $request->input('estatus');
-        $carro->save();
+        $data = $request->except('imagen');
 
         if ($request->hasFile('imagen')) {
-            $file = $request->file('imagen');
-            $nombre = 'carro_' . $carro->id . '.' . $file->getClientOriginalExtension();
-            $ruta = $file->storeAs('imagenes/carros', $nombre, 'public');
-            $carro->imagen = url('storage/' . $ruta);
-            $carro->save();
+            $archivo = $request->file('imagen');
+            $data['imagen'] = $archivo;
+        }
+
+        try {
+            $this->client()->post('/api/carros', $data, $this->token());
+        } catch (RuntimeException $exception) {
+            return back()->withErrors(['carro' => $exception->getMessage()])->withInput();
         }
 
         return redirect('/carro')->with('success', 'Carro guardado exitosamente.');
     }
 
-    public function eliminar(Request $request)
+    public function editar(string $id)
     {
-        $id = $request->route('id');
-        $carro = Carro::find($id);
-        if (!$carro) {
-            return redirect('/carro')->with('error', 'Carro no encontrado');
+        try {
+            $payload = $this->client()->get("/api/carros/{$id}", $this->token());
+        } catch (RuntimeException $exception) {
+            return redirect('/carro')->withErrors(['carro' => $exception->getMessage()]);
         }
-        $carro->delete();
-        return redirect('/carro')->with('success', 'Carro eliminado');
+
+        $carro = $this->normalizePayload($payload['carro'] ?? null);
+
+        return view('carro/edicion', compact('carro'));
     }
 
-    public function mostrar(Request $request)
+    public function actualizar(Request $request, string $id)
     {
-        $id = $request->route('id');
-        $carro = Carro::find($id);
-        if (!$carro) {
-            return redirect('/carro')->with('error', 'Carro no encontrado');
+        $data = $request->except('imagen');
+
+        if ($request->hasFile('imagen')) {
+            $archivo = $request->file('imagen');
+            $data['imagen'] = $archivo;
         }
-        return view('carro/borrado', ['carro' => $carro]);
+
+        try {
+            $this->client()->put("/api/carros/{$id}", $data, $this->token());
+        } catch (RuntimeException $exception) {
+            return back()->withErrors(['carro' => $exception->getMessage()])->withInput();
+        }
+
+        return redirect('/carro')->with('success', 'Carro actualizado correctamente.');
+    }
+
+    public function mostrar(string $id)
+    {
+        try {
+            $payload = $this->client()->get("/api/carros/{$id}", $this->token());
+        } catch (RuntimeException $exception) {
+            return redirect('/carro')->withErrors(['carro' => $exception->getMessage()]);
+        }
+
+        $carro = $this->normalizePayload($payload['carro'] ?? null);
+
+        return view('carro/borrado', compact('carro'));
+    }
+
+    public function eliminar(string $id)
+    {
+        try {
+            $payload = $this->client()->delete("/api/carros/{$id}", $this->token());
+        } catch (RuntimeException $exception) {
+            return redirect('/carro')->withErrors(['carro' => $exception->getMessage()]);
+        }
+
+        return redirect('/carro')->with('success', $payload['message'] ?? 'Carro eliminado correctamente.');
     }
 }

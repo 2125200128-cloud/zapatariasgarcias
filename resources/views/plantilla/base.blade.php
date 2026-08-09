@@ -10,12 +10,22 @@
 
 <body class="bg-gray-100">
 
-    {{-- Navbar --}}
+    {{-- $apiUser, $esAdmin, $esMatriz, $puedeGestionar los inyecta
+         MenuComposer en TODAS las vistas, no solo aquí. --}}
+    @php
+        $userName = trim((string) ($apiUser['nombre'] ?? '') . ' ' . (string) ($apiUser['apellido_paterno'] ?? ''));
+        if ($userName === '') {
+            $userName = (string) ($apiUser['usuario'] ?? 'Usuario');
+        }
+        $userEmail = (string) ($apiUser['correo'] ?? $apiUser['usuario'] ?? '');
+        $rol = (string) ($apiUser['rol'] ?? '');
+        $miSucursalNombre = data_get($apiUser, 'sucursal.nombre');
+    @endphp
+
+    {{-- Navbar superior --}}
     <nav class="fixed top-0 z-50 w-full bg-white border-b border-gray-200">
         <div class="px-3 py-3 lg:px-5 lg:pl-3 flex items-center justify-between">
-
             <div class="flex items-center">
-                <!-- Botón hamburguesa -->
                 <button id="toggleSidebar"
                     type="button"
                     class="inline-flex items-center p-2 text-sm text-gray-500 rounded-lg hover:bg-gray-100">
@@ -37,15 +47,18 @@
                 </button>
                 <div class="hidden z-50 my-4 text-base list-none bg-white divide-y divide-gray-100 rounded-lg shadow"
                     id="dropdown-user">
-                    @php
-                        $empleadoActual = \App\Models\Empleado::auth();
-                    @endphp
-                    @if ($empleadoActual)
-                        <div class="px-4 py-3">
-                            <p class="text-sm font-semibold">{{ $empleadoActual->nombre }} {{ $empleadoActual->apellido_paterno }}</p>
-                            <p class="text-sm text-gray-500">{{ $empleadoActual->usuario }} · {{ $empleadoActual->rol }}</p>
-                        </div>
-                    @endif
+                    <div class="px-4 py-3">
+                        <p class="text-sm font-semibold">{{ $userName }}</p>
+                        <p class="text-sm text-gray-500">
+                            {{ $userEmail ?: 'Usuario de la API' }}
+                            @if ($rol)
+                                · {{ $rol }}
+                            @endif
+                            @if ($miSucursalNombre)
+                                · {{ $miSucursalNombre }}
+                            @endif
+                        </p>
+                    </div>
                     <ul class="py-2">
                         <li>
                             <form action="{{ url('/logout') }}" method="POST">
@@ -59,49 +72,42 @@
         </div>
     </nav>
 
-    {{-- Sidebar --}}
-    {{-- Ya NO lleva "sm:translate-x-0": el estado lo maneja 100% el JS --}}
+    {{-- Sidebar lateral --}}
     <aside id="logo-sidebar"
         class="fixed top-0 left-0 z-40 w-64 h-screen pt-20 transition-transform -translate-x-full bg-white border-r border-gray-200">
-
         <div class="h-full px-3 pb-4 overflow-y-auto bg-white">
-            @php
-                $empleadoSidebar = \App\Models\Empleado::auth();
-                $puedeAsignar = $empleadoSidebar && ($empleadoSidebar->esAdministrador() || $empleadoSidebar->esMatriz());
-            @endphp
             <ul class="space-y-2 font-medium">
                 <li><a href="{{ url('/') }}" class="flex items-center p-2 rounded-lg hover:bg-gray-100">Inicio</a></li>
-                @if ($empleadoSidebar && $empleadoSidebar->esAdministrador())
-                    <li><a href="{{ url('/empleado') }}" class="flex items-center p-2 rounded-lg hover:bg-gray-100">Empleados</a></li>
-                @endif
+
                 <li><a href="{{ url('/pedido') }}" class="flex items-center p-2 rounded-lg hover:bg-gray-100">Pedidos</a></li>
-                @if ($puedeAsignar)
-                    <li><a href="{{ url('/pedido/pendientes') }}" class="flex items-center p-2 pl-4 ml-3 border-l-2 border-gray-200 rounded-lg hover:bg-gray-100 hover:border-gray-300 text-sm text-gray-600">Pendientes de aceptar</a></li>
+                @if ($puedeGestionar)
+                    <li><a href="{{ url('/pedido/pendientes') }}" class="flex items-center p-2 pl-4 ml-3 border-l-2 border-gray-200 rounded-lg hover:bg-gray-100 text-sm text-gray-600">Pendientes</a></li>
                 @endif
-                @if ($empleadoSidebar && $empleadoSidebar->esAdministrador())
+
+                <li><a href="{{ url('/trayecto/lista') }}" class="flex items-center p-2 rounded-lg hover:bg-gray-100">{{ $puedeGestionar ? 'Trayectos' : 'Mi trayecto' }}</a></li>
+                <li><a href="{{ url('/trayecto/flota') }}" class="flex items-center p-2 pl-4 ml-3 border-l-2 border-gray-200 rounded-lg hover:bg-gray-100 text-sm text-gray-600">Mapa de flota</a></li>
+
+                <li><a href="{{ url('/inventario') }}" class="flex items-center p-2 rounded-lg hover:bg-gray-100">{{ $puedeGestionar ? 'Inventario' : 'Mi inventario' }}</a></li>
+
+                @if ($esAdmin)
+                   
                     <li><a href="{{ url('/producto') }}" class="flex items-center p-2 rounded-lg hover:bg-gray-100">Productos</a></li>
-                    <li><a href="{{ url('/proveedor') }}" class="flex items-center p-2 rounded-lg hover:bg-gray-100">Proveedores</a></li>
                     <li><a href="{{ url('/sucursal') }}" class="flex items-center p-2 rounded-lg hover:bg-gray-100">Sucursales</a></li>
-                    <li><a href="{{ url('/carro') }}" class="flex items-center p-2 rounded-lg hover:bg-gray-100">Carros</a></li>
                     <li><a href="{{ url('/chofer') }}" class="flex items-center p-2 rounded-lg hover:bg-gray-100">Choferes</a></li>
-                @endif
-                <li><a href="{{ url('/trayecto/lista') }}" class="flex items-center p-2 rounded-lg hover:bg-gray-100">Trayectos</a></li>
-                <li><a href="{{ url('/trayecto/flota') }}" class="flex items-center p-2 pl-4 ml-3 border-l-2 border-gray-200 rounded-lg hover:bg-gray-100 hover:border-gray-300 text-sm text-gray-600">Mapa de flota</a></li>
-                <li><a href="{{ url('/inventario') }}" class="flex items-center p-2 rounded-lg hover:bg-gray-100">Inventario</a></li>
-                @if ($empleadoSidebar && $empleadoSidebar->esAdministrador())
+                    <li><a href="{{ url('/carro') }}" class="flex items-center p-2 rounded-lg hover:bg-gray-100">Carros</a></li>
+                    <li><a href="{{ url('/empleado') }}" class="flex items-center p-2 rounded-lg hover:bg-gray-100">Empleados</a></li>
                     <li><a href="{{ url('/marca') }}" class="flex items-center p-2 rounded-lg hover:bg-gray-100">Marcas</a></li>
+                    <li><a href="{{ url('/proveedor') }}" class="flex items-center p-2 rounded-lg hover:bg-gray-100">Proveedores</a></li>
                 @endif
             </ul>
         </div>
     </aside>
 
-    {{-- Contenido --}}
-    {{-- id="mainContent" para poder ajustar el margen dinámicamente con JS --}}
+    {{-- Contenido dinámico --}}
     <main id="mainContent" class="p-4 mt-16 transition-all duration-300">
         @yield('dinamico')
     </main>
 
-    {{-- Script para toggle con Flowbite/Tailwind --}}
     <script>
         const toggleBtn = document.getElementById('toggleSidebar');
         const sidebar = document.getElementById('logo-sidebar');
@@ -117,24 +123,20 @@
             mainContent.classList.add('sm:ml-64');
         }
 
-        // Mostrar/ocultar sidebar con el botón hamburguesa
         toggleBtn.addEventListener('click', () => {
             const isHidden = sidebar.classList.contains('-translate-x-full');
             isHidden ? openSidebar() : closeSidebar();
         });
 
-        // Ocultar sidebar al dar clic en cualquier enlace del menú
         sidebar.querySelectorAll('a').forEach(link => {
             link.addEventListener('click', () => {
                 closeSidebar();
             });
         });
 
-        // Estado inicial: cerrado, mostrando solo el botón hamburguesa
         closeSidebar();
     </script>
 
-    <!-- Flowbite JS -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.2.1/flowbite.min.js"></script>
 
 </body>

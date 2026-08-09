@@ -2,110 +2,34 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Empleado;
-use App\Models\Sucursal;
-use App\Models\Producto;
-use App\Models\Pedido;
-use App\Models\Chofer;
-use App\Models\Detalle_pedido;
+use RuntimeException;
 
-class InicioController extends Controller
+class InicioController extends ApiFrontController
 {
     public function inicio()
     {
-        $empleado = Empleado::auth();
-        if (!$empleado) {
+        if (!$this->currentUser()) {
             return redirect('/login');
         }
 
-        $esMatrizOAdmin = $empleado->esAdministrador() || $empleado->esMatriz();
-
-        if ($esMatrizOAdmin) {
-            return $this->inicioMatriz();
+        try {
+            $payload = $this->client()->get('/api/inicio', $this->token());
+        } catch (RuntimeException $exception) {
+            return redirect('/login')->withErrors(['usuario' => $exception->getMessage()]);
         }
 
-        return $this->inicioSucursal($empleado);
-    }
+        $esMatrizOAdmin = (bool) ($payload['esMatrizOAdmin'] ?? false);
+        $kpis = $payload['kpis'] ?? [];
+        $grafico1Labels = $this->normalizeCollection($payload['grafico1Labels'] ?? []);
+        $grafico1Datos = $this->normalizeCollection($payload['grafico1Datos'] ?? []);
+        $topProductos = $this->normalizeCollection($payload['topProductos'] ?? []);
+        $pedidosPorEstatus = $this->normalizeCollection($payload['pedidosPorEstatus'] ?? []);
+        $trayectoActivoResumen = $this->normalizePayload($payload['trayectoActivoResumen'] ?? null);
 
-    // Vista global: la matriz/administrador ve el panorama de todas las
-    // sucursales.
-    private function inicioMatriz()
-    {
-        $esMatrizOAdmin = true;
-
-        $kpis = [
-            'sucursales' => Sucursal::where('estatus', 'Activo')->count(),
-            'pedidosPendientes' => Pedido::where('estatus', 'Pendiente')->count(),
-            'productos' => Producto::where('estatus', 'Activo')->count(),
-            'choferes' => Chofer::where('estatus', 'Activo')->count(),
-        ];
-
-        $grafico1Labels = Sucursal::all()->map(fn ($sucursal) => preg_replace('/^Sucursal\s+/i', '', $sucursal->nombre));
-        $grafico1Datos = Sucursal::all()->map(fn ($sucursal) => Pedido::where('empleado_id', $sucursal->empleado_id)->count());
-
-        $topProductos = Detalle_pedido::selectRaw('producto_id, SUM(cantidad_solicitada) as total')
-            ->groupBy('producto_id')
-            ->orderByDesc('total')
-            ->take(5)
-            ->with('producto')
-            ->get()
-            ->filter(fn ($fila) => $fila->producto)
-            ->map(fn ($fila) => ['nombre' => $fila->producto->nombre, 'total' => (int) $fila->total]);
-
-        $pedidosPorEstatus = collect(['Pendiente', 'Realizado', 'Cancelado'])->map(function ($estatus) {
-            return [
-                'estatus' => $estatus,
-                'total' => Pedido::where('estatus', $estatus)->count(),
-            ];
-        });
-
-        return view('/inicio', compact('esMatrizOAdmin', 'kpis', 'grafico1Labels', 'grafico1Datos', 'topProductos', 'pedidosPorEstatus'));
-    }
-
-    // Vista de una sucursal: todo escalado a sus propios pedidos — nunca ve
-    // datos de la matriz ni de las demás sucursales.
-    private function inicioSucursal(Empleado $empleado)
-    {
-        $esMatrizOAdmin = false;
-
-        $miSucursal = $empleado->miSucursal();
-        $miEmpleadoId = optional($miSucursal)->empleado_id ?? 0;
-
-        $kpis = [
-            'pendientes' => Pedido::where('empleado_id', $miEmpleadoId)->where('estatus', 'Pendiente')->count(),
-            'enCamino' => Pedido::where('empleado_id', $miEmpleadoId)
-                ->whereHas('trayectos', fn ($q) => $q->whereIn('estatus', ['Aceptado', 'En ruta']))
-                ->count(),
-            'entregados' => Pedido::where('empleado_id', $miEmpleadoId)->where('estatus', 'Realizado')->count(),
-            'productos' => Producto::where('estatus', 'Activo')->count(),
-        ];
-
-        $pedidosPorMes = Pedido::where('empleado_id', $miEmpleadoId)
-            ->selectRaw("DATE_FORMAT(fecha, '%Y-%m') as mes, COUNT(*) as total")
-            ->groupBy('mes')
-            ->orderBy('mes')
-            ->get();
-        $grafico1Labels = $pedidosPorMes->pluck('mes');
-        $grafico1Datos = $pedidosPorMes->pluck('total');
-
-        $topProductos = Detalle_pedido::selectRaw('producto_id, SUM(cantidad_solicitada) as total')
-            ->whereHas('pedido', fn ($q) => $q->where('empleado_id', $miEmpleadoId))
-            ->groupBy('producto_id')
-            ->orderByDesc('total')
-            ->take(5)
-            ->with('producto')
-            ->get()
-            ->filter(fn ($fila) => $fila->producto)
-            ->map(fn ($fila) => ['nombre' => $fila->producto->nombre, 'total' => (int) $fila->total]);
-
-        $pedidosPorEstatus = collect(['Pendiente', 'Realizado', 'Cancelado'])->map(function ($estatus) use ($miEmpleadoId) {
-            return [
-                'estatus' => $estatus,
-                'total' => Pedido::where('empleado_id', $miEmpleadoId)->where('estatus', $estatus)->count(),
-            ];
-        });
-
-        return view('/inicio', compact('esMatrizOAdmin', 'kpis', 'grafico1Labels', 'grafico1Datos', 'topProductos', 'pedidosPorEstatus'));
+        return view('/inicio', compact(
+            'esMatrizOAdmin', 'kpis', 'grafico1Labels', 'grafico1Datos',
+            'topProductos', 'pedidosPorEstatus', 'trayectoActivoResumen'
+        ));
     }
 
     public function login()

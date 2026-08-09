@@ -3,219 +3,22 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\URL;
-use App\Models\Empleado;
-use App\Models\Trayecto;
-use App\Models\TrayectoUbicacion;
-use App\Models\Chofer;
-use App\Models\Carro;
-use App\Models\Pedido;
-use App\Models\Inventario;
+use RuntimeException;
 
-class TrayectoController extends Controller
+class TrayectoController extends ApiFrontController
 {
-    // Administrador y el Encargado de la matriz asignan/gestionan cualquier
-    // trayecto; un Encargado de sucursal solo ve los suyos.
-    private function puedeAsignar(): bool
-    {
-        $empleado = Empleado::auth();
-        return $empleado !== null && ($empleado->esAdministrador() || $empleado->esMatriz());
-    }
-
     public function listado()
     {
-        $query = Trayecto::with(['chofer', 'carro', 'pedido.empleado.sucursales']);
-
-        if (!$this->puedeAsignar()) {
-            $miSucursal = Empleado::auth()?->miSucursal();
-            $miEmpleadoId = $miSucursal?->empleado_id ?? 0;
-            $query->whereHas('pedido', function ($q) use ($miEmpleadoId) {
-                $q->where('empleado_id', $miEmpleadoId);
-            });
+        try {
+            $payload = $this->client()->get('/api/trayectos', $this->token());
+        } catch (RuntimeException $exception) {
+            return redirect('/login')->withErrors(['usuario' => $exception->getMessage()]);
         }
 
-        $trayectos = $query->get();
+        $trayectos = $this->normalizeCollection($payload['trayectos'] ?? []);
+        $puedeGestionar = $this->puedeGestionar();
 
-        return view('trayecto/lista', compact('trayectos'));
-    }
-
-    // Un chofer/carro/pedido está "ocupado" si tiene un trayecto cuyo
-    // estatus no sea Entregado ni Cancelado. $excluirTrayectoId se usa al
-    // editar, para que el propio trayecto no se cuente como "ocupándose a
-    // sí mismo" y desaparezca de su propio formulario. El criterio de
-    // chofer/carro vive en Chofer::scopeDisponible()/Carro::scopeDisponible()
-    // para poder reusarlo también desde PedidoController.
-    private function disponibles($excluirTrayectoId = null)
-    {
-        return [
-            'choferes' => Chofer::disponible($excluirTrayectoId)->get(),
-            'carros' => Carro::disponible($excluirTrayectoId)->get(),
-            'pedidos' => Pedido::whereDoesntHave('trayectos', function ($query) use ($excluirTrayectoId) {
-                $query->whereNotIn('estatus', ['Entregado', 'Cancelado']);
-                if ($excluirTrayectoId) {
-                    $query->where('id', '!=', $excluirTrayectoId);
-                }
-            })->with('empleado.sucursales')->get(),
-        ];
-    }
-
-    public function editar(Request $request)
-    {
-        if (!$this->puedeAsignar()) {
-            abort(403, 'Solo la matriz puede editar trayectos.');
-        }
-
-        $id = $request->route('id');
-        $trayecto = Trayecto::find($id);
-        if (!$trayecto) {
-            return redirect('/trayecto/lista')->with('error', 'Trayecto no encontrado');
-        }
-
-        $disponibles = $this->disponibles($trayecto->id);
-        // Aseguramos que el chofer/carro/pedido actuales del trayecto sigan
-        // apareciendo en su propio formulario aunque ya "estén ocupados"
-        // (por él mismo).
-        if (!$disponibles['choferes']->contains('id', $trayecto->chofer_id) && $trayecto->chofer) {
-            $disponibles['choferes']->push($trayecto->chofer);
-        }
-        if (!$disponibles['carros']->contains('id', $trayecto->carro_id) && $trayecto->carro) {
-            $disponibles['carros']->push($trayecto->carro);
-        }
-        if (!$disponibles['pedidos']->contains('id', $trayecto->pedido_id) && $trayecto->pedido) {
-            $disponibles['pedidos']->push($trayecto->pedido);
-        }
-
-        return view('trayecto/edicion', array_merge($disponibles, ['trayecto' => $trayecto]));
-    }
-
-    public function actualizar(Request $request)
-    {
-        if (!$this->puedeAsignar()) {
-            abort(403, 'Solo la matriz puede editar trayectos.');
-        }
-
-        $id = $request->route('id');
-        $trayecto = Trayecto::find($id);
-        if (!$trayecto) {
-            return redirect('/trayecto/lista')->with('error', 'Trayecto no encontrado');
-        }
-
-        $choferId = $request->input('chofer_id');
-        $carroId = $request->input('carro_id');
-        $pedidoId = $request->input('pedido_id');
-
-        $disponibles = $this->disponibles($trayecto->id);
-        if (!$disponibles['choferes']->contains('id', $choferId)
-            || !$disponibles['carros']->contains('id', $carroId)
-            || !$disponibles['pedidos']->contains('id', $pedidoId)) {
-            return redirect('/trayecto/editar/' . $trayecto->id)->with('error', 'El chofer, carro o pedido elegido ya no está disponible.');
-        }
-
-        $estatusAnterior = $trayecto->estatus;
-
-        $trayecto->chofer_id = $choferId;
-        $trayecto->carro_id = $carroId;
-        $trayecto->pedido_id = $pedidoId;
-        $trayecto->estatus = $request->input('estatus');
-        $trayecto->descripcion_ruta = $request->input('descripcion_ruta');
-        $trayecto->save();
-
-        // Recién se confirma la entrega (y no lo estaba ya, para no volver a
-        // sumar si se guarda otra vez sin cambiar el estatus): la sucursal
-        // que pidió recibe el stock que llevaba el trayecto.
-        if ($trayecto->estatus === 'Entregado' && $estatusAnterior !== 'Entregado') {
-            $this->reabastecerSucursalDestino($trayecto);
-        }
-
-        return redirect('/trayecto/lista')->with('success', 'Trayecto actualizado');
-    }
-
-    // El encargado de la sucursal destino (o Administrador) confirma que el
-    // pedido llegó — solo tiene sentido desde 'En ruta'.
-    public function confirmarLlegada(Request $request)
-    {
-        $id = $request->route('id');
-        $trayecto = Trayecto::with('pedido.empleado.sucursales')->find($id);
-        if (!$trayecto) {
-            return redirect('/trayecto/lista')->with('error', 'Trayecto no encontrado');
-        }
-
-        if ($trayecto->estatus !== 'En ruta') {
-            return redirect('/trayecto/lista')->with('error', 'Este trayecto todavía no está en ruta.');
-        }
-
-        $empleado = Empleado::auth();
-        if (!$empleado || !$empleado->esAdministrador()) {
-            $miSucursal = $empleado?->miSucursal();
-            $sucursalDestino = optional($trayecto->pedido?->empleado)->sucursales->first();
-            if (!$miSucursal || !$sucursalDestino || $miSucursal->id !== $sucursalDestino->id) {
-                abort(403, 'Solo el encargado de la sucursal destino puede confirmar la llegada.');
-            }
-        }
-
-        $trayecto->estatus = 'Entregado';
-        $trayecto->save();
-
-        $this->reabastecerSucursalDestino($trayecto);
-
-        if ($trayecto->pedido) {
-            $trayecto->pedido->estatus = 'Realizado';
-            $trayecto->pedido->save();
-        }
-
-        return redirect('/trayecto/lista')->with('success', 'Entrega confirmada. Se actualizó el inventario de tu sucursal.');
-    }
-
-    private function reabastecerSucursalDestino(Trayecto $trayecto)
-    {
-        $trayecto->load(['pedido.empleado.sucursales', 'pedido.detallePedidos']);
-        $pedido = $trayecto->pedido;
-        $sucursalDestino = $pedido ? optional($pedido->empleado)->sucursales->first() : null;
-
-        if (!$pedido || !$sucursalDestino) {
-            return;
-        }
-
-        DB::transaction(function () use ($sucursalDestino, $pedido) {
-            foreach ($pedido->detallePedidos as $detalle) {
-                $inventario = Inventario::firstOrCreate(
-                    ['sucursal_id' => $sucursalDestino->id, 'producto_id' => $detalle->producto_id],
-                    ['stock' => 0, 'estatus' => 'Activo']
-                );
-                $inventario->increment('stock', $detalle->cantidad_solicitada);
-            }
-        });
-    }
-
-    public function eliminar(Request $request)
-    {
-        if (!$this->puedeAsignar()) {
-            abort(403, 'Solo la matriz puede cancelar trayectos.');
-        }
-
-        $id = $request->route('id');
-        $trayecto = Trayecto::find($id);
-        if (!$trayecto) {
-            return redirect('/trayecto/lista')->with('error', 'Trayecto no encontrado');
-        }
-        $trayecto->estatus = 'Cancelado';
-        $trayecto->save();
-        return redirect('/trayecto/lista')->with('success', 'Trayecto cancelado');
-    }
-
-    public function mostrar(Request $request)
-    {
-        if (!$this->puedeAsignar()) {
-            abort(403, 'Solo la matriz puede cancelar trayectos.');
-        }
-
-        $id = $request->route('id');
-        $trayecto = Trayecto::find($id);
-        if (!$trayecto) {
-            return redirect('/trayecto/lista')->with('error', 'Trayecto no encontrado');
-        }
-        return view('trayecto/borrado', ['trayecto' => $trayecto]);
+        return view('trayecto/lista', compact('trayectos', 'puedeGestionar'));
     }
 
     public function flota()
@@ -223,115 +26,124 @@ class TrayectoController extends Controller
         return view('trayecto/flota');
     }
 
-    public function ubicacionesFlota()
+    public function ubicaciones()
     {
-        $query = Trayecto::with(['chofer', 'pedido.empleado.sucursales', 'ubicacionActual'])
-            ->whereNotIn('estatus', ['Entregado', 'Cancelado']);
-
-        // Igual que en listado(): una sucursal solo ve el trayecto de sus
-        // propios pedidos en el mapa, no el de las demás.
-        if (!$this->puedeAsignar()) {
-            $miSucursal = Empleado::auth()?->miSucursal();
-            $miEmpleadoId = $miSucursal?->empleado_id ?? 0;
-            $query->whereHas('pedido', function ($q) use ($miEmpleadoId) {
-                $q->where('empleado_id', $miEmpleadoId);
-            });
+        try {
+            $payload = $this->client()->get('/api/trayectos/fleet-locations', $this->token());
+        } catch (RuntimeException $exception) {
+            return response()->json(['error' => $exception->getMessage()], 500);
         }
 
-        $trayectos = $query->get();
-
-        $municipios = config('ubicaciones.municipios');
-
-        $datos = $trayectos->map(function (Trayecto $trayecto) use ($municipios) {
-            $sucursal = null;
-            if ($trayecto->pedido && $trayecto->pedido->empleado) {
-                $sucursal = $trayecto->pedido->empleado->sucursales->first();
-            }
-
-            $destino = null;
-            if ($sucursal && isset($municipios[$sucursal->municipio])) {
-                [$lat, $lng] = $municipios[$sucursal->municipio];
-                $destino = [
-                    'sucursal' => $sucursal->nombre,
-                    'municipio' => $sucursal->municipio,
-                    'lat' => $lat,
-                    'lng' => $lng,
-                ];
-            }
-
-            $posicion = null;
-            if ($trayecto->ubicacionActual) {
-                $posicion = [
-                    'lat' => (float) $trayecto->ubicacionActual->latitud,
-                    'lng' => (float) $trayecto->ubicacionActual->longitud,
-                    'actualizado_en' => $trayecto->ubicacionActual->registrado_en,
-                ];
-            }
-
-            return [
-                'trayecto_id' => $trayecto->id,
-                'estatus' => $trayecto->estatus,
-                'chofer' => $trayecto->chofer ? trim($trayecto->chofer->nombre . ' ' . $trayecto->chofer->apellido) : null,
-                'pedido_id' => $trayecto->pedido_id,
-                'destino' => $destino,
-                'posicion' => $posicion,
-            ];
-        });
-
-        return response()->json($datos->values());
+        return response()->json($payload);
     }
 
-    public function compartirUbicacion(Request $request)
-    {
-        $id = $request->route('id');
-        $trayecto = Trayecto::find($id);
+    // No hay formulario()/guardar(): la API no tiene POST /api/trayectos.
+    // Un trayecto solo se crea al aceptar un pedido pendiente
+    // (PedidoController::aceptar()/procesarAceptar()).
 
-        if (!$trayecto) {
-            abort(404, 'Trayecto no encontrado');
+    public function editar(string $id)
+    {
+        if (!$this->puedeGestionar()) {
+            abort(403, 'Solo la matriz puede editar trayectos.');
         }
 
-        // El chofer nunca ve/usa el id "a pelo" — el botón de la vista
-        // manda a esta URL ya firmada, generada aquí mismo.
-        $urlUbicacion = URL::temporarySignedRoute(
-            'trayecto.ubicacion',
-            now()->addHours(24),
-            ['id' => $trayecto->id]
-        );
+        try {
+            $payload = $this->client()->get("/api/trayectos/{$id}", $this->token());
+        } catch (RuntimeException $exception) {
+            return redirect('/trayecto/lista')->withErrors(['trayecto' => $exception->getMessage()]);
+        }
 
-        return view('trayecto/compartir', [
-            'trayecto' => $trayecto,
-            'urlUbicacion' => $urlUbicacion,
-            'yaTermino' => in_array($trayecto->estatus, ['Entregado', 'Cancelado']),
-        ]);
+        $trayecto = $this->normalizePayload($payload['trayecto'] ?? null);
+        $choferes = $this->normalizeCollection($payload['choferes'] ?? []);
+        $carros = $this->normalizeCollection($payload['carros'] ?? []);
+        $pedidos = $this->normalizeCollection($payload['pedidos'] ?? []);
+
+        return view('trayecto/edicion', compact('trayecto', 'choferes', 'carros', 'pedidos'));
     }
 
-    public function registrarUbicacion(Request $request)
+    public function actualizar(Request $request, string $id)
     {
-        $id = $request->route('id');
-        $trayecto = Trayecto::find($id);
-
-        if (!$trayecto) {
-            return response()->json(['error' => 'Trayecto no encontrado'], 404);
+        if (!$this->puedeGestionar()) {
+            abort(403, 'Solo la matriz puede editar trayectos.');
         }
 
-        $validado = $request->validate([
-            'latitud' => 'required|numeric|between:-90,90',
-            'longitud' => 'required|numeric|between:-180,180',
-        ]);
+        $data = [
+            'pedido_id' => $request->input('pedido_id'),
+            'chofer_id' => $request->input('chofer_id'),
+            'carro_id' => $request->input('carro_id'),
+            'estatus' => $request->input('estatus'),
+            'descripcion_ruta' => $request->input('descripcion_ruta'),
+        ];
 
-        TrayectoUbicacion::create([
-            'trayecto_id' => $trayecto->id,
-            'latitud' => $validado['latitud'],
-            'longitud' => $validado['longitud'],
-        ]);
-
-        // El primer ping de ubicación del chofer es lo que marca que ya
-        // arrancó la entrega.
-        if ($trayecto->estatus === 'Aceptado') {
-            $trayecto->estatus = 'En ruta';
-            $trayecto->save();
+        try {
+            $this->client()->put("/api/trayectos/{$id}", $data, $this->token());
+        } catch (RuntimeException $exception) {
+            return back()->withErrors(['trayecto' => $exception->getMessage()])->withInput();
         }
 
-        return response()->json(['ok' => true]);
+        return redirect('/trayecto/lista')->with('success', 'Trayecto actualizado correctamente.');
+    }
+
+    // Reusa el mismo endpoint que editar(): la API no tiene una ruta propia
+    // para "mostrar" un trayecto — mismo patrón que ya vimos con pedidos.
+    public function mostrar(string $id)
+    {
+        if (!$this->puedeGestionar()) {
+            abort(403, 'Solo la matriz puede cancelar trayectos.');
+        }
+
+        try {
+            $payload = $this->client()->get("/api/trayectos/{$id}", $this->token());
+        } catch (RuntimeException $exception) {
+            return redirect('/trayecto/lista')->withErrors(['trayecto' => $exception->getMessage()]);
+        }
+
+        $trayecto = $this->normalizePayload($payload['trayecto'] ?? null);
+
+        return view('trayecto/borrado', compact('trayecto'));
+    }
+
+    public function eliminar(string $id)
+    {
+        if (!$this->puedeGestionar()) {
+            abort(403, 'Solo la matriz puede cancelar trayectos.');
+        }
+
+        try {
+            $payload = $this->client()->delete("/api/trayectos/{$id}", $this->token());
+        } catch (RuntimeException $exception) {
+            return redirect('/trayecto/lista')->withErrors(['trayecto' => $exception->getMessage()]);
+        }
+
+        return redirect('/trayecto/lista')->with('success', $payload['message'] ?? 'Trayecto cancelado correctamente.');
+    }
+
+    public function compartir(string $id)
+    {
+        try {
+            $payload = $this->client()->get("/api/trayectos/{$id}/share", $this->token());
+        } catch (RuntimeException $exception) {
+            return redirect('/trayecto/lista')->withErrors(['trayecto' => $exception->getMessage()]);
+        }
+
+        $trayecto = $this->normalizePayload($payload['trayecto'] ?? null);
+        $urlUbicacion = $payload['urlUbicacion'] ?? null;
+        $yaTermino = (bool) ($payload['yaTermino'] ?? false);
+
+        return view('trayecto/compartir', compact('trayecto', 'urlUbicacion', 'yaTermino'));
+    }
+
+    // Nuevo: no existía ni ruta ni método. Cualquier empleado autorizado
+    // (encargado del destino o admin — la API ya lo valida) puede confirmar
+    // que su pedido llegó.
+    public function confirmarLlegada(string $id)
+    {
+        try {
+            $payload = $this->client()->post("/api/trayectos/{$id}/confirm-arrival", [], $this->token());
+        } catch (RuntimeException $exception) {
+            return back()->withErrors(['trayecto' => $exception->getMessage()]);
+        }
+
+        return back()->with('success', $payload['message'] ?? 'Entrega confirmada.');
     }
 }

@@ -3,136 +3,99 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use Illuminate\Validation\Rule;
-use App\Models\Proveedor;
+use RuntimeException;
 
-class ProveedorController extends Controller
+class ProveedorController extends ApiFrontController
 {
     public function inicio()
     {
-        $proveedores = Proveedor::all();
+        try {
+            $payload = $this->client()->get('/api/proveedores', $this->token());
+        } catch (RuntimeException $exception) {
+            return redirect('/login')->withErrors(['usuario' => $exception->getMessage()]);
+        }
+
+        $proveedores = $this->normalizeCollection($payload['proveedores'] ?? []);
 
         return view('proveedor/inicio', compact('proveedores'));
     }
 
     public function formulario()
     {
+        // Proveedor no necesita catálogos, cargamos la vista directo
         return view('proveedor/formulario');
-    }
-
-    public function editar(Request $request)
-    {
-        $id = $request->route('id');
-        $proveedor = Proveedor::find($id);
-        if (!$proveedor) {
-            return redirect('/proveedor')->with('error', 'Proveedor no encontrado');
-        }
-        return view('proveedor/edicion', ['proveedor' => $proveedor]);
-    }
-
-    // Reglas compartidas por guardar()/actualizar(). 'contacto' es un
-    // teléfono a 10 dígitos (así está en la BD, columna varchar(10)); sin
-    // esta validación, un nombre de contacto o un teléfono con guiones
-    // truena la app con un error de MySQL sin control.
-    private function reglas($idProveedor = null)
-    {
-        return [
-            'nombre' => 'required|string|max:100',
-            'contacto' => 'required|digits:10',
-            'correo' => ['required', 'email', 'max:150', Rule::unique('proveedores', 'correo')->ignore($idProveedor)],
-            'calle' => 'required|string|max:255',
-            'numero' => 'required|integer',
-            'municipio' => 'required|string|max:100',
-            'codigo_postal' => 'required|string|max:5',
-            'estatus' => 'required|in:Activo,Inactivo',
-        ];
-    }
-
-    private function mensajes()
-    {
-        return [
-            'contacto.digits' => 'El contacto debe ser un teléfono a 10 dígitos, sin espacios ni guiones.',
-            'correo.unique' => 'Ya existe un proveedor registrado con ese correo.',
-        ];
-    }
-
-    public function actualizar(Request $request)
-    {
-        $id = $request->route('id');
-        $proveedor = Proveedor::find($id);
-        if (!$proveedor) {
-            return redirect('/proveedor')->with('error', 'Proveedor no encontrado');
-        }
-
-        $request->validate($this->reglas($id), $this->mensajes());
-
-        $proveedor->nombre = $request->input('nombre');
-        $proveedor->contacto = $request->input('contacto');
-        $proveedor->correo = $request->input('correo');
-        $proveedor->calle = $request->input('calle');
-        $proveedor->numero = $request->input('numero');
-        $proveedor->municipio = $request->input('municipio');
-        $proveedor->codigo_postal = $request->input('codigo_postal');
-        $proveedor->estatus = $request->input('estatus');
-        $proveedor->save();
-
-        if ($request->hasFile('imagen')) {
-            $file = $request->file('imagen');
-            $nombre = 'proveedor_' . $proveedor->id . '.' . $file->getClientOriginalExtension();
-            $ruta = $file->storeAs('imagenes/proveedores', $nombre, 'public');
-            $proveedor->imagen = url('storage/' . $ruta);
-            $proveedor->save();
-        }
-
-        return redirect('/proveedor')->with('success', 'Proveedor actualizado');
     }
 
     public function guardar(Request $request)
     {
-        $request->validate($this->reglas(), $this->mensajes());
-
-        $proveedor = new Proveedor();
-        $proveedor->nombre = $request->input('nombre');
-        $proveedor->contacto = $request->input('contacto');
-        $proveedor->correo = $request->input('correo');
-        $proveedor->calle = $request->input('calle');
-        $proveedor->numero = $request->input('numero');
-        $proveedor->municipio = $request->input('municipio');
-        $proveedor->codigo_postal = $request->input('codigo_postal');
-        $proveedor->estatus = $request->input('estatus');
-        $proveedor->imagen = 'sin-imagen.jpg';
-        $proveedor->save();
+        $data = $request->except('imagen');
 
         if ($request->hasFile('imagen')) {
-            $file = $request->file('imagen');
-            $nombre = 'proveedor_' . $proveedor->id . '.' . $file->getClientOriginalExtension();
-            $ruta = $file->storeAs('imagenes/proveedores', $nombre, 'public');
-            $proveedor->imagen = url('storage/' . $ruta);
-            $proveedor->save();
+            $archivo = $request->file('imagen');
+            $data['imagen'] = $archivo;
+        }
+
+        try {
+            $this->client()->post('/api/proveedores', $data, $this->token());
+        } catch (RuntimeException $exception) {
+            return back()->withErrors(['proveedor' => $exception->getMessage()])->withInput();
         }
 
         return redirect('/proveedor')->with('success', 'Proveedor guardado exitosamente.');
     }
 
-    public function eliminar(Request $request)
+    public function editar(string $id)
     {
-        $id = $request->route('id');
-        $proveedor = Proveedor::find($id);
-        if (!$proveedor) {
-            return redirect('/proveedor')->with('error', 'Proveedor no encontrado');
+        try {
+            $payload = $this->client()->get("/api/proveedores/{$id}", $this->token());
+        } catch (RuntimeException $exception) {
+            return redirect('/proveedor')->withErrors(['proveedor' => $exception->getMessage()]);
         }
-        $proveedor->estatus = 'Inactivo';
-        $proveedor->save();
-        return redirect('/proveedor')->with('success', 'Proveedor eliminado');
+
+        $proveedor = $this->normalizePayload($payload['proveedor'] ?? null);
+
+        return view('proveedor/edicion', compact('proveedor'));
     }
 
-    public function mostrar(Request $request)
+    public function actualizar(Request $request, string $id)
     {
-        $id = $request->route('id');
-        $proveedor = Proveedor::find($id);
-        if (!$proveedor) {
-            return redirect('/proveedor')->with('error', 'Proveedor no encontrado');
+        $data = $request->except('imagen');
+
+        if ($request->hasFile('imagen')) {
+            $archivo = $request->file('imagen');
+            $data['imagen'] = $archivo;
         }
-        return view('proveedor/borrado', ['proveedor' => $proveedor]);
+
+        try {
+            $this->client()->put("/api/proveedores/{$id}", $data, $this->token());
+        } catch (RuntimeException $exception) {
+            return back()->withErrors(['proveedor' => $exception->getMessage()])->withInput();
+        }
+
+        return redirect('/proveedor')->with('success', 'Proveedor actualizado correctamente.');
+    }
+
+    public function mostrar(string $id)
+    {
+        try {
+            $payload = $this->client()->get("/api/proveedores/{$id}", $this->token());
+        } catch (RuntimeException $exception) {
+            return redirect('/proveedor')->withErrors(['proveedor' => $exception->getMessage()]);
+        }
+
+        $proveedor = $this->normalizePayload($payload['proveedor'] ?? null);
+
+        return view('proveedor/borrado', compact('proveedor'));
+    }
+
+    public function eliminar(string $id)
+    {
+        try {
+            $payload = $this->client()->delete("/api/proveedores/{$id}", $this->token());
+        } catch (RuntimeException $exception) {
+            return redirect('/proveedor')->withErrors(['proveedor' => $exception->getMessage()]);
+        }
+
+        return redirect('/proveedor')->with('success', $payload['message'] ?? 'Proveedor eliminado correctamente.');
     }
 }
