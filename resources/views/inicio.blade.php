@@ -2,23 +2,28 @@
 
 @section('dinamico')
 
+<div class="text-2xl font-brand font-semibold mt-1 p-4 text-[#c0891c]">
+    <h4>Resumen del Día</h4>
+</div>
+
 <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+
     @if ($esMatrizOAdmin)
-        <div class="bg-white p-5 rounded-lg shadow">
-            <p class="text-sm text-gray-500">Sucursales activas</p>
-            <p class="text-3xl font-semibold text-gray-900 mt-1">{{ data_get($kpis, 'sucursales', 0) }}</p>
+        <div class="bg-brand-brown/90 p-5 rounded-lg shadow">
+            <p class="text-sm text-white font-semibold">Sucursales activas</p>
+            <p class="text-3xl font-semibold text-[#cfccca] mt-1">{{ data_get($kpis, 'sucursales', 0) }}</p>
         </div>
-        <div class="bg-white p-5 rounded-lg shadow">
-            <p class="text-sm text-gray-500">Pedidos pendientes</p>
-            <p class="text-3xl font-semibold text-gray-900 mt-1">{{ data_get($kpis, 'pedidosPendientes', 0) }}</p>
+        <div class="bg-brand-brown/90 p-5 rounded-lg shadow">
+            <p class="text-sm text-white font-semibold">Pedidos pendientes</p>
+            <p class="text-3xl font-semibold text-[#cfccca] mt-1">{{ data_get($kpis, 'pedidosPendientes', 0) }}</p>
         </div>
-        <div class="bg-white p-5 rounded-lg shadow">
-            <p class="text-sm text-gray-500">Productos activos</p>
-            <p class="text-3xl font-semibold text-gray-900 mt-1">{{ data_get($kpis, 'productos', 0) }}</p>
+        <div class="bg-brand-brown/90 p-5 rounded-lg shadow">
+            <p class="text-sm text-white font-semibold">Productos activos</p>
+            <p class="text-3xl font-semibold text-[#cfccca] mt-1">{{ data_get($kpis, 'productos', 0) }}</p>
         </div>
-        <div class="bg-white p-5 rounded-lg shadow">
-            <p class="text-sm text-gray-500">Choferes activos</p>
-            <p class="text-3xl font-semibold text-gray-900 mt-1">{{ data_get($kpis, 'choferes', 0) }}</p>
+        <div class="bg-brand-brown/90 p-5 rounded-lg shadow">
+            <p class="text-sm text-white font-semibold">Choferes activos</p>
+            <p class="text-3xl font-semibold text-[#cfccca] mt-1">{{ data_get($kpis, 'choferes', 0) }}</p>
         </div>
     @else
         <div class="bg-white p-5 rounded-lg shadow">
@@ -62,23 +67,27 @@
     </div>
 @endif
 
+<div class="text-2xl font-semibold font-brand mt-1 p-4 text-[#c0891c]">
+    Actividades de sucursales
+</div>
+
 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-    <div class="bg-white p-6 rounded-lg shadow">
+    <div class="bg-brand-brown/70 p-6 rounded-lg shadow">
         @if ($esMatrizOAdmin)
-            <h2 class="text-base font-semibold text-gray-800 mb-1">Pedidos por sucursal</h2>
-            <p class="text-sm text-gray-500 mb-4">Volumen de pedidos que cada sucursal le ha solicitado a la matriz.</p>
+            <h2 class="text-base font-semibold text-gray-100 mb-1">Pedidos por sucursal</h2>
+            <p class="text-sm text-[#fef1e2] mb-4">Volumen de pedidos que cada sucursal le ha solicitado a la matriz.</p>
         @else
             <h2 class="text-base font-semibold text-gray-800 mb-1">Mis pedidos por mes</h2>
-            <p class="text-sm text-gray-500 mb-4">Cuántos pedidos ha hecho tu sucursal cada mes.</p>
+            <p class="text-sm text-[#979fb9] mb-4">Cuántos pedidos ha hecho tu sucursal cada mes.</p>
         @endif
         <div class="relative h-64">
             <canvas id="graficoSucursales"></canvas>
         </div>
     </div>
-
-    <div class="bg-white p-6 rounded-lg shadow">
-        <h2 class="text-base font-semibold text-gray-800 mb-1">Productos más solicitados</h2>
-        <p class="text-sm text-gray-500 mb-4">
+    
+    <div class="bg-brand-brown/70 p-6 rounded-lg shadow">
+        <h2 class="text-base font-semibold text-gray-100 mb-1">Productos más solicitados</h2>
+        <p class="text-sm mb-4 text-[#fef1e2]">
             {{ $esMatrizOAdmin ? 'Top 5 por unidades pedidas en total.' : 'Top 5 que más ha pedido tu sucursal.' }}
         </p>
         <div class="relative h-64">
@@ -87,11 +96,15 @@
     </div>
 </div>
 
-<div class="bg-white p-6 rounded-lg shadow">
-    <h2 class="text-base font-semibold text-gray-800 mb-1">
+<div class="text-2xl font-semibold font-brand mt-1 p-4 text-[#c0891c]">
+    Resumen de los Pedidos
+</div>
+
+<div class="bg-brand-brown/40 p-6 rounded-lg shadow">
+    <h2 class="text-base font-semibold text-[#4F4D46] mb-1">
         {{ $esMatrizOAdmin ? 'Pedidos por estatus' : 'Mis pedidos por estatus' }}
     </h2>
-    <p class="text-sm text-gray-500 mb-4">Qué tan avanzados van los pedidos activos.</p>
+    <p class="text-sm text-gray-500 mb-4">Avance de pedidos activos.</p>
     <div class="relative h-48">
         <canvas id="graficoEstatus"></canvas>
     </div>
@@ -99,7 +112,7 @@
 
 <script>
 document.addEventListener("DOMContentLoaded", () => {
-    const inkMuted = '#898781';
+    const inkMuted = '#EAD8C3';
     const gridline = '#e1e0d9';
 
     Chart.defaults.font.family = "system-ui, -apple-system, 'Segoe UI', sans-serif";
@@ -124,7 +137,7 @@ document.addEventListener("DOMContentLoaded", () => {
             labels: @json($grafico1Labels ?? []),
             datasets: [{
                 data: @json($grafico1Datos ?? []),
-                backgroundColor: '#2a78d6',
+                backgroundColor: '#675647',
                 ...marcaBarra,
             }],
         },
@@ -147,7 +160,7 @@ document.addEventListener("DOMContentLoaded", () => {
             labels: @json($topProductos?->pluck('nombre') ?? []),
             datasets: [{
                 data: @json($topProductos?->pluck('total') ?? []),
-                backgroundColor: '#1baf7a',
+                backgroundColor: '#b4977d',
                 ...marcaBarra,
             }],
         },
@@ -164,7 +177,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     // ---- Pedidos por estatus ----
-    const coloresEstatus = { Pendiente: '#fab219', Realizado: '#0ca30c', Cancelado: '#d03b3b' };
+    const coloresEstatus = { Pendiente: '#CC6B22', Realizado: '#4B633B', Cancelado: '#80453E' };
     const datosEstatus = @json($pedidosPorEstatus ?? []);
 
     new Chart(document.getElementById('graficoEstatus'), {
@@ -173,7 +186,7 @@ document.addEventListener("DOMContentLoaded", () => {
             labels: datosEstatus.map(d => d.estatus),
             datasets: [{
                 data: datosEstatus.map(d => d.total),
-                backgroundColor: datosEstatus.map(d => coloresEstatus[d.estatus] || '#898781'),
+                backgroundColor: datosEstatus.map(d => coloresEstatus[d.estatus] || '#4F4D46'),
                 ...marcaBarra,
             }],
         },
@@ -184,7 +197,7 @@ document.addEventListener("DOMContentLoaded", () => {
             plugins: { legend: { display: false }, tooltip: { displayColors: false } },
             scales: {
                 x: { ...axisDefaults, beginAtZero: true, ticks: { ...axisDefaults.ticks, precision: 0 } },
-                y: { ...axisDefaults, grid: { display: false }, border: { display: true, color: '#c3c2b7' } },
+                y: { ...axisDefaults, grid: { display: false }, border: { display: true, color: '#BA9D8A' } },
             },
         },
     });
