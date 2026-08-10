@@ -31,7 +31,7 @@
     @endphp
 
     {{-- Navbar superior --}}
-    <nav class="fixed top-0 z-50 w-full bg-brand-dark/90 backdrop-blur-sm dark:bg-gray-800 border-b border-brand-brown/20 dark:border-gray-700">
+    <nav class="fixed top-0 z-50 w-full bg-brand-dark/93 backdrop-blur-sm dark:bg-gray-800 border-b border-brand-brown/20 dark:border-gray-700">
         <div class="px-3 py-3 lg:px-5 lg:pl-3 flex items-center justify-between">
             <div class="flex items-center">
                 <button id="toggleSidebar"
@@ -41,10 +41,10 @@
                     ☰
                 </button>
 
-                <span class="self-center text-2xl font-normal whitespace-nowrap ml-3 text-[#ebe2d6] dark:text-brand-cream flex items-center gap-2 font-serif">
+                <a href="{{ url('/') }}" class="self-center text-1xl whitespace-nowrap ml-3 text-[#ebe2d6] dark:text-brand-cream flex items-center gap-2 font-serif">
                     <img src="{{ asset('images/HG-blanco.png') }}" alt="Logo" width="90">
                     Zapatería Hermanos García
-                </span>
+                </a>
             </div>
 
             <div class="flex items-center gap-2">
@@ -92,29 +92,29 @@
 
     {{-- Sidebar lateral --}}
     <aside id="logo-sidebar"
-        class="fixed top-0 left-0 z-40 w-64 h-screen pt-20 transition-transform -translate-x-full bg-brand-cream dark:bg-gray-800 border-r border-brand-brown/20 dark:border-gray-700">
-        <div class="h-full px-3 pb-4 overflow-y-auto">
+        class="fixed top-0 left-0 z-40 w-64 h-screen pt-20 transition-transform -translate-x-full bg-bg-brand-dark/93 dark:bg-gray-800 border-r border-brand-brown/20 dark:border-gray-700">
+        <div class="h-full px-3 pb-4 overflow-y-auto bg-brand-dark/85">
             <ul class="space-y-2 font-medium">
-                <li><a href="{{ url('/') }}" class="flex items-center p-2 rounded-lg text-brand-brown-dark dark:text-brand-cream hover:bg-brand-brown/10 dark:hover:bg-white/10">Inicio</a></li>
+                <li><a href="{{ url('/') }}" class="flex items-center p-2 rounded-lg text-white dark:text-brand-cream hover:bg-brand-brown/10 dark:hover:bg-white/10">Inicio</a></li>
 
-                <li><a href="{{ url('/pedido') }}" class="flex items-center p-2 rounded-lg text-brand-brown-dark dark:text-brand-cream hover:bg-brand-brown/10 dark:hover:bg-white/10">Pedidos</a></li>
+                <li><a href="{{ url('/pedido') }}" class="flex items-center p-2 rounded-lg text-white dark:text-brand-cream hover:bg-brand-brown/10 dark:hover:bg-white/10">Pedidos</a></li>
                 @if ($puedeGestionar)
                     <li><a href="{{ url('/pedido/pendientes') }}" class="flex items-center p-2 pl-4 ml-3 border-l-2 border-brand-brown/20 dark:border-gray-600 rounded-lg hover:bg-brand-brown/10 dark:hover:bg-white/10 text-sm text-brand-brown dark:text-brand-cream/80">Pendientes</a></li>
                 @endif
 
-                <li><a href="{{ url('/trayecto/lista') }}" class="flex items-center p-2 rounded-lg text-brand-brown-dark dark:text-brand-cream hover:bg-brand-brown/10 dark:hover:bg-white/10">{{ $puedeGestionar ? 'Trayectos' : 'Mi trayecto' }}</a></li>
+                <li><a href="{{ url('/trayecto/lista') }}" class="flex items-center p-2 rounded-lg text-white dark:text-brand-cream hover:bg-brand-brown/10 dark:hover:bg-white/10">{{ $puedeGestionar ? 'Trayectos' : 'Mi trayecto' }}</a></li>
                 <li><a href="{{ url('/trayecto/flota') }}" class="flex items-center p-2 pl-4 ml-3 border-l-2 border-brand-brown/20 dark:border-gray-600 rounded-lg hover:bg-brand-brown/10 dark:hover:bg-white/10 text-sm text-brand-brown dark:text-brand-cream/80">Mapa de flota</a></li>
 
-                <li><a href="{{ url('/inventario') }}" class="flex items-center p-2 rounded-lg text-brand-brown-dark dark:text-brand-cream hover:bg-brand-brown/10 dark:hover:bg-white/10">{{ $puedeGestionar ? 'Inventario' : 'Mi inventario' }}</a></li>
+                <li><a href="{{ url('/inventario') }}" class="flex items-center p-2 rounded-lg text-white dark:text-brand-cream hover:bg-brand-brown/10 dark:hover:bg-white/10">{{ $puedeGestionar ? 'Inventario' : 'Mi inventario' }}</a></li>
 
                 @if ($esAdmin)
-                    <li><a href="{{ url('/producto') }}" class="flex items-center p-2 rounded-lg text-brand-brown-dark dark:text-brand-cream hover:bg-brand-brown/10 dark:hover:bg-white/10">Productos</a></li>
-                    <li><a href="{{ url('/sucursal') }}" class="flex items-center p-2 rounded-lg text-brand-brown-dark dark:text-brand-cream hover:bg-brand-brown/10 dark:hover:bg-white/10">Sucursales</a></li>
-                    <li><a href="{{ url('/chofer') }}" class="flex items-center p-2 rounded-lg text-brand-brown-dark dark:text-brand-cream hover:bg-brand-brown/10 dark:hover:bg-white/10">Choferes</a></li>
-                    <li><a href="{{ url('/carro') }}" class="flex items-center p-2 rounded-lg text-brand-brown-dark dark:text-brand-cream hover:bg-brand-brown/10 dark:hover:bg-white/10">Carros</a></li>
-                    <li><a href="{{ url('/empleado') }}" class="flex items-center p-2 rounded-lg text-brand-brown-dark dark:text-brand-cream hover:bg-brand-brown/10 dark:hover:bg-white/10">Empleados</a></li>
-                    <li><a href="{{ url('/marca') }}" class="flex items-center p-2 rounded-lg text-brand-brown-dark dark:text-brand-cream hover:bg-brand-brown/10 dark:hover:bg-white/10">Marcas</a></li>
-                    <li><a href="{{ url('/proveedor') }}" class="flex items-center p-2 rounded-lg text-brand-brown-dark dark:text-brand-cream hover:bg-brand-brown/10 dark:hover:bg-white/10">Proveedores</a></li>
+                    <li><a href="{{ url('/producto') }}" class="flex items-center p-2 rounded-lg text-white dark:text-brand-cream hover:bg-brand-brown/10 dark:hover:bg-white/10">Productos</a></li>
+                    <li><a href="{{ url('/sucursal') }}" class="flex items-center p-2 rounded-lg text-white dark:text-brand-cream hover:bg-brand-brown/10 dark:hover:bg-white/10">Sucursales</a></li>
+                    <li><a href="{{ url('/chofer') }}" class="flex items-center p-2 rounded-lg text-white dark:text-brand-cream hover:bg-brand-brown/10 dark:hover:bg-white/10">Choferes</a></li>
+                    <li><a href="{{ url('/carro') }}" class="flex items-center p-2 rounded-lg text-white dark:text-brand-cream hover:bg-brand-brown/10 dark:hover:bg-white/10">Carros</a></li>
+                    <li><a href="{{ url('/empleado') }}" class="flex items-center p-2 rounded-lg text-white dark:text-brand-cream hover:bg-brand-brown/10 dark:hover:bg-white/10">Empleados</a></li>
+                    <li><a href="{{ url('/marca') }}" class="flex items-center p-2 rounded-lg text-white dark:text-brand-cream hover:bg-brand-brown/10 dark:hover:bg-white/10">Marcas</a></li>
+                    <li><a href="{{ url('/proveedor') }}" class="flex items-center p-2 rounded-lg text-white dark:text-brand-cream hover:bg-brand-brown/10 dark:hover:bg-white/10">Proveedores</a></li>
                 @endif
             </ul>
         </div>
@@ -184,8 +184,9 @@
                     <div>
                         <h2 class="mb-6 text-sm font-semibold text-[#ebe2d6] uppercase">Contacto</h2>
                         <ul class="text-brand-cream/70">
-                            <li class="mb-4 text-[#ebe2d6]"><a href="mailto:contacto@hermanosgarcia.com" class="hover:underline">red-ivo@solutions.com</a></li>
-                            <li><a href="#" class="hover:underline text-[#ebe2d6]">Sucursales</a></li>
+                            <li class="mb-4 text-[#ebe2d6]"><a href="mailto:red-ivo@solutions.com" class="hover:underline">red-ivo@solutions.com</a></li>
+                            <li class="mb-4 text-[#ebe2d6]"><a href="#" class="hover:underline text-[#ebe2d6]">Sucursales</a></li>
+                            <li class="mb-4 text-[#ebe2d6]"><a href="#" class="hover:underline text-[#ebe2d6]">Politica de privacidad</a></li>
                         </ul>
                     </div>
                 </div>

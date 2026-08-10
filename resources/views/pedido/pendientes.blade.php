@@ -2,11 +2,16 @@
 
 @section('dinamico')
 
-<div class="flex items-center justify-between mb-4">
-    <h1 class="text-2xl font-semibold text-gray-800">Pedidos pendientes de aceptar</h1>
-    <a href="{{ url('/pedido') }}" class="border border-gray-300 px-4 py-2 rounded-lg hover:bg-gray-50 text-sm">
-        Ver todos los pedidos
-    </a>
+<div class="flex items-center justify-between mb-6">
+    <div class="flex items-center gap-3">
+        <img src="{{ asset('images/pendientes.png') }}" alt="Pedidos-pendientes" class="w-15 h-15 m-6">
+        <h1 class="text-3xl font-serif text-[#17181d]">Pedidos pendientes de aceptar</h1>
+    </div>
+    <div>
+        <a href="{{ url('/pedido') }}" class="bg-brand-black-coffe text-white px-4 py-2 rounded-lg text-sm hover:bg-brand-brown-dark font-semibold">
+            Ver todos los pedidos
+        </a>
+    </div>
 </div>
 
 @if (session('success'))

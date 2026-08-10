@@ -12,10 +12,15 @@
     --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
         'Segoe UI Symbol', 'Noto Color Emoji';
     --font-script: 'Dancing Script';
-    --color-brand-beige: #ebe2d6;
-    --color-brand-dark: #17181d;
-    --color-brand-brown: #4d4a44;
-    --color-brand-caramel: #9c8068;
-    --color-brand-black-coffe: #715b49;
-    --color-brand-gray: #C9C5B1;
+    --color-brand-beige: #f7f0e9; /* color del fondo */
+    --color-brand-dark: #17181d; /* color del nav */
+    --color-brand-brown: #c9c2bc; /* Como café con leche como gris raro, clarito */
+    --color-brand-caramel: #9c8068; /* color paleta de cajeta */
+    --color-brand-black-coffe: #715b49; /* <-- este es como cafe con leche */
+    --color-brand-gray: #C9C5B1; /* Color amarillo grisaseo */
 }
+
+
+/*
+#3d3228 <-- cafe chocolate sumbanana
+*/

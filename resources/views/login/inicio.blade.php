@@ -27,7 +27,7 @@
         </div>
       @endif
       <div class="field">
-        <input type="text" name="usuario" placeholder="Usuario" value="{{ old('usuario') }}" required autofocus />
+        <input type="text" name="usuario" placeholder="Usuario" value="{{ old('usuario') }}" required autofocus style="text-white"/>
       </div>
       <div class="field">
         <input type="password" name="password" placeholder="Contraseña" required />
