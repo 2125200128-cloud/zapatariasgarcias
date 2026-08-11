@@ -14,6 +14,11 @@
         </div>
     </div>
     <div class="flex items-center gap-3">
+        @if ($puedeGestionar)
+            <a href="{{ url('/pedido/pendientes') }}" class="border border-brand-brown/30 text-brand-brown px-4 py-2 rounded-lg text-sm hover:bg-brand-brown/10 font-semibold">
+                Pedidos pendientes de aceptar
+            </a>
+        @endif
         <span class="text-sm text-[#3d3228]">{{ count($pedidos ?? []) }} registros</span>
         <a href="{{ url('/pedido/formulario') }}" class="bg-brand-black-coffe text-white px-4 py-2 rounded-lg text-sm hover:bg-brand-brown-dark font-semibold">
             Nuevo pedido
@@ -108,17 +113,42 @@
                     <td class="px-4 py-3">{{ data_get($pedido, 'fecha', '—') }}</td>
                     <td class="px-4 py-3">{{ count(data_get($pedido, 'detallePedidos', [])) }}</td>
                     <td class="px-4 py-3">
-                        <ul class="space-y-0.5">
-                            @forelse (data_get($pedido, 'detallePedidos', []) as $detalle)
-                                <li>
-                                    {{ data_get($detalle, 'producto.nombre', '—') }}
-                                    ({{ data_get($detalle, 'producto.talla', '—') }})
-                                    × {{ data_get($detalle, 'cantidad_solicitada', '—') }}
-                                </li>
-                            @empty
-                                <li class="text-gray-400-italic">Sin productos</li>
-                            @endforelse
-                        </ul>
+                        @if (data_get($pedido, 'estatus') === 'Cancelado')
+                            <span class="inline-flex items-center gap-1 text-red-700 bg-red-50 border border-red-200 px-2 py-1 rounded-full text-xs font-medium">
+                                ✕ Cancelado
+                            </span>
+                        @elseif (!$trayecto)
+                            <span class="inline-flex items-center gap-1 text-amber-700 bg-amber-50 border border-amber-200 px-2 py-1 rounded-full text-xs font-medium">
+                                Esperando aceptación
+                            </span>
+                        @else
+                            @php
+                                $pasoActual = array_search(data_get($trayecto, 'estatus'), $pasosPedido);
+                                $pasoActual = $pasoActual === false ? 0 : $pasoActual;
+                            @endphp
+                            <div class="w-48">
+                                <div class="flex items-center">
+                                    @foreach ($pasosPedido as $i => $paso)
+                                        <div class="w-5 h-5 rounded-full flex items-center justify-center shrink-0 text-[10px] leading-none
+                                            {{ $i <= $pasoActual ? 'bg-blue-600 text-white' : 'bg-white border-2 border-gray-300' }}">
+                                            @if ($i <= $pasoActual)
+                                                &#10003;
+                                            @endif
+                                        </div>
+                                        @if (!$loop->last)
+                                            <div class="flex-1 h-0.5 {{ $i < $pasoActual ? 'bg-blue-600' : 'bg-gray-300' }}"></div>
+                                        @endif
+                                    @endforeach
+                                </div>
+                                <div class="flex mt-1">
+                                    @foreach ($pasosPedido as $i => $paso)
+                                        <span class="flex-1 text-center text-[9px] leading-tight {{ $i === $pasoActual ? 'font-semibold text-gray-800' : 'text-gray-400' }}">
+                                            {{ $paso }}
+                                        </span>
+                                    @endforeach
+                                </div>
+                            </div>
+                        @endif
                     </td>
                     <td class="px-4 py-3 whitespace-nowrap space-x-2">
                         @if ($puedeGestionar)

@@ -6,7 +6,7 @@
     <h1 class="text-2xl font-semibold text-gray-800">Productos</h1>
     <div class="flex items-center gap-3">
         <span class="text-sm text-gray-500">{{ count($grupos ?? []) }} grupos visibles</span>
-        <a href="{{ url('/producto/formulario') }}" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-700">
+        <a href="{{ url('/producto/formulario') }}" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-700 transition-colors">
             Nuevo producto
         </a>
     </div>
@@ -24,56 +24,216 @@
     </div>
 @endif
 
-<div class="bg-white rounded-lg shadow overflow-x-auto">
+{{-- Tabla Principal Limpia --}}
+<div class="bg-white rounded-lg shadow overflow-x-auto border border-gray-100">
     <table class="min-w-full text-sm text-left">
         <thead class="bg-gray-50 text-gray-600 uppercase text-xs">
             <tr>
-                <th class="px-4 py-3">Nombre</th>
+                <th class="px-4 py-3">Producto</th>
                 <th class="px-4 py-3">Marca</th>
-                <th class="px-4 py-3">Proveedor</th>
                 <th class="px-4 py-3">Precio</th>
-                <th class="px-4 py-3">Tallas</th>
-                <th class="px-4 py-3">Categoría</th>
                 <th class="px-4 py-3">Estatus</th>
-                <th class="px-4 py-3">Acciones</th>
+                <th class="px-4 py-3 text-right">Acciones</th>
             </tr>
         </thead>
         <tbody class="divide-y divide-gray-100">
             @forelse ($grupos ?? [] as $grupo)
                 @php
-                    $primero = $grupo->first();
+                    // Obtenemos el primer registro del grupo para los datos generales
+                    $primero = is_array($grupo) ? reset($grupo) : $grupo->first();
+                    
+                    // Extraer nombres de relaciones
+                    $marca = data_get($primero, 'marca.nombre') ?? data_get($primero, 'marca', '—');
+                    $proveedor = data_get($primero, 'proveedor.nombre') ?? data_get($primero, 'proveedor', '—');
+
+                    // Imagen Principal
+                    $img1 = data_get($primero, 'imagen_1') ?? data_get($primero, 'imagen1') ?? asset('images/sin-imagen.jpg');
+                    if (!str_starts_with($img1, 'http') && $img1 !== asset('images/sin-imagen.jpg')) {
+                        $img1 = asset($img1);
+                    }
+
+                    // Recopilar todas las tallas del grupo
+                    $tallas = [];
+                    foreach ($grupo as $v) {
+                        $tallas[] = data_get($v, 'talla', '—');
+                    }
+
+                    // Paquete de datos que enviamos al Modal
+                    $datosModal = [
+                        'nombre'    => data_get($primero, 'nombre', '—'),
+                        'marca'     => $marca,
+                        'proveedor' => $proveedor,
+                        'precio'    => data_get($primero, 'precio', 0),
+                        'categoria' => data_get($primero, 'categoria', '—'),
+                        'estatus'   => data_get($primero, 'estatus', '—'),
+                        'imagen_1'  => data_get($primero, 'imagen_1') ?? data_get($primero, 'imagen1'),
+                        'imagen_2'  => data_get($primero, 'imagen_2') ?? data_get($primero, 'imagen2'),
+                        'imagen_3'  => data_get($primero, 'imagen_3') ?? data_get($primero, 'imagen3'),
+                        'tallas'    => $tallas,
+                    ];
                 @endphp
-                <tr>
-                    <td class="px-4 py-3">{{ data_get($primero, 'nombre', '—') }}</td>
-                    <td class="px-4 py-3">{{ data_get($primero, 'marca.nombre', '—') }}</td>
-                    <td class="px-4 py-3">{{ data_get($primero, 'proveedor.nombre', '—') }}</td>
-                    <td class="px-4 py-3">{{ data_get($primero, 'precio', '—') }}</td>
+                <tr class="hover:bg-gray-50/60 transition-colors">
+                    {{-- Miniatura + Nombre + Categoría --}}
                     <td class="px-4 py-3">
-                        <div class="flex flex-wrap gap-1">
-                            @foreach ($grupo as $variante)
-                                <span class="inline-flex items-center rounded-full bg-gray-100 px-2 py-1 text-xs text-gray-700">
-                                    {{ data_get($variante, 'talla', '—') }}
-                                </span>
-                            @endforeach
+                        <div class="flex items-center gap-3">
+                            <img src="{{ $img1 }}" alt="Foto producto" class="h-11 w-11 rounded-lg object-cover border border-gray-200 flex-shrink-0 bg-gray-50">
+                            <div>
+                                <p class="font-semibold text-gray-900">{{ data_get($primero, 'nombre', '—') }}</p>
+                                <p class="text-xs text-gray-500">{{ data_get($primero, 'categoria', 'Sin categoría') }}</p>
+                            </div>
                         </div>
                     </td>
-                    <td class="px-4 py-3">{{ data_get($primero, 'categoria', '—') }}</td>
-                    <td class="px-4 py-3">{{ data_get($primero, 'estatus', '—') }}</td>
-                    <td class="px-4 py-3 whitespace-nowrap">
-                        <div class="flex gap-3">
-                            <a href="{{ url('/producto/editar/' . data_get($primero, 'id', '')) }}" class="text-blue-600 hover:underline">Editar</a>
-                            <a href="{{ url('/producto/mostrar/' . data_get($primero, 'id', '')) }}" class="text-red-600 hover:underline">Eliminar</a>
+
+                    <td class="px-4 py-3 font-medium text-gray-700">{{ $marca }}</td>
+
+                    <td class="px-4 py-3 font-semibold text-gray-900">
+                        ${{ number_format((float) data_get($primero, 'precio', 0), 2) }}
+                    </td>
+
+                    <td class="px-4 py-3">
+                        @if (data_get($primero, 'estatus') === 'Activo')
+                            <span class="inline-flex items-center rounded-full bg-green-50 px-2 py-1 text-xs font-medium text-green-700 ring-1 ring-inset ring-green-600/20">Activo</span>
+                        @else
+                            <span class="inline-flex items-center rounded-full bg-red-50 px-2 py-1 text-xs font-medium text-red-700 ring-1 ring-inset ring-red-600/20">Inactivo</span>
+                        @endif
+                    </td>
+
+                    {{-- Acciones --}}
+                    <td class="px-4 py-3 text-right">
+                        <div class="flex items-center justify-end gap-3">
+                            {{-- Botón VER (Abre Modal de forma segura con @json) --}}
+                            <button type="button" 
+                                    data-producto='@json($datosModal)'
+                                    onclick="abrirModalDetalle(this)" 
+                                    class="rounded-lg p-1 text-gray-500 hover:bg-gray-100 hover:text-blue-600 transition-colors" 
+                                    title="Ver detalle completo">
+                                👁️
+                            </button>
+
+                            <a href="{{ url('/producto/editar/' . data_get($primero, 'id', '')) }}" class="text-blue-600 hover:underline text-xs font-medium">Editar</a>
+                            <a href="{{ url('/producto/mostrar/' . data_get($primero, 'id', '')) }}" class="text-red-600 hover:underline text-xs font-medium">Eliminar</a>
                         </div>
                     </td>
                 </tr>
             @empty
                 <tr>
-                    <td colspan="8" class="px-4 py-6 text-center text-gray-500">No hay productos registrados.</td>
+                    <td colspan="5" class="px-4 py-6 text-center text-gray-500">No hay productos registrados.</td>
                 </tr>
             @endforelse
         </tbody>
     </table>
 </div>
 
+{{-- Modal de Detalle de Producto --}}
+<div id="modalDetalle" class="fixed inset-0 z-50 hidden bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="w-full max-w-2xl rounded-2xl bg-white p-6 shadow-2xl transition-all">
+        
+        {{-- Header --}}
+        <div class="flex items-center justify-between border-b border-gray-100 pb-3">
+            <h3 id="modal-titulo" class="text-xl font-bold text-gray-900">Detalles del Producto</h3>
+            <button onclick="cerrarModalDetalle()" class="rounded-lg p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-900">
+                ✕
+            </button>
+        </div>
+
+        {{-- Galería de 3 Imágenes --}}
+        <div class="my-4">
+            <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Galería de Imágenes</p>
+            <div class="grid grid-cols-3 gap-3">
+                <div class="h-28 rounded-lg border border-gray-200 overflow-hidden bg-gray-50">
+                    <img id="modal-img1" src="" class="w-full h-full object-cover">
+                </div>
+                <div class="h-28 rounded-lg border border-gray-200 overflow-hidden bg-gray-50">
+                    <img id="modal-img2" src="" class="w-full h-full object-cover">
+                </div>
+                <div class="h-28 rounded-lg border border-gray-200 overflow-hidden bg-gray-50">
+                    <img id="modal-img3" src="" class="w-full h-full object-cover">
+                </div>
+            </div>
+        </div>
+
+        {{-- Datos completos --}}
+        <div class="grid grid-cols-2 sm:grid-cols-3 gap-4 text-sm bg-gray-50 p-4 rounded-xl">
+            <div>
+                <span class="block text-xs text-gray-500">Marca</span>
+                <strong id="modal-marca" class="text-gray-900"></strong>
+            </div>
+            <div>
+                <span class="block text-xs text-gray-500">Categoría</span>
+                <strong id="modal-categoria" class="text-gray-900"></strong>
+            </div>
+            <div>
+                <span class="block text-xs text-gray-500">Precio</span>
+                <strong id="modal-precio" class="text-green-600 font-bold"></strong>
+            </div>
+            <div class="col-span-2 sm:col-span-3">
+                <span class="block text-xs text-gray-500">Proveedor</span>
+                <strong id="modal-proveedor" class="text-gray-900"></strong>
+            </div>
+        </div>
+
+        {{-- Tallas --}}
+        <div class="mt-4">
+            <span class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Tallas Disponibles</span>
+            <div id="modal-tallas" class="flex flex-wrap gap-1.5">
+                {{-- Se llena dinámicamente con JS --}}
+            </div>
+        </div>
+
+        {{-- Footer --}}
+        <div class="mt-6 flex justify-end">
+            <button onclick="cerrarModalDetalle()" class="px-4 py-2 bg-gray-200 text-gray-800 text-sm font-medium rounded-lg hover:bg-gray-300">
+                Cerrar
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+    function abrirModalDetalle(btn) {
+        // Lee el objeto JSON embebido en el botón
+        const p = JSON.parse(btn.getAttribute('data-producto'));
+
+        // Textos
+        document.getElementById('modal-titulo').innerText = p.nombre || 'Producto';
+        document.getElementById('modal-marca').innerText = p.marca || '—';
+        document.getElementById('modal-categoria').innerText = p.categoria || '—';
+        document.getElementById('modal-proveedor').innerText = p.proveedor || '—';
+        document.getElementById('modal-precio').innerText = '$' + parseFloat(p.precio || 0).toFixed(2);
+
+        // Imágenes
+        const imgPlaceholder = "{{ asset('images/sin-imagen.jpg') }}";
+        
+        ['1', '2', '3'].forEach(num => {
+            let imgUrl = p['imagen_' + num] || imgPlaceholder;
+            if (imgUrl !== imgPlaceholder && !imgUrl.startsWith('http')) {
+                imgUrl = "{{ asset('') }}" + imgUrl;
+            }
+            document.getElementById('modal-img' + num).src = imgUrl;
+        });
+
+        // Tallas
+        const contenedorTallas = document.getElementById('modal-tallas');
+        contenedorTallas.innerHTML = '';
+
+        if (Array.isArray(p.tallas) && p.tallas.length > 0) {
+            p.tallas.forEach(talla => {
+                const badge = document.createElement('span');
+                badge.className = 'px-2.5 py-1 text-xs font-semibold bg-blue-50 text-blue-700 rounded-md border border-blue-100';
+                badge.innerText = talla;
+                contenedorTallas.appendChild(badge);
+            });
+        } else {
+            contenedorTallas.innerHTML = '<span class="text-xs text-gray-400 italic">Sin tallas registradas</span>';
+        }
+
+        // Mostrar Modal
+        document.getElementById('modalDetalle').classList.remove('hidden');
+    }
+
+    function cerrarModalDetalle() {
+        document.getElementById('modalDetalle').classList.add('hidden');
+    }
+</script>
 
 @endsection

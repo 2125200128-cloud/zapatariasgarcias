@@ -28,7 +28,6 @@
     <table class="min-w-full text-sm text-left">
         <thead class="bg-gray-50 text-gray-600 uppercase text-xs">
             <tr>
-                <th class="px-4 py-3">Imagen</th>
                 <th class="px-4 py-3">ID</th>
                 <th class="px-4 py-3">Nombre</th>
                 <th class="px-4 py-3">Contacto</th>
@@ -41,11 +40,6 @@
         <tbody class="divide-y divide-gray-100">
             @forelse ($proveedores ?? [] as $proveedor)
                 <tr>
-                    <td class="px-4 py-3">
-                        <div class="w-10 h-10 rounded bg-gray-100 overflow-hidden flex items-center justify-center">
-                            <img src="{{ data_get($proveedor, 'imagen', '') }}" class="w-full h-full object-cover" onerror="this.remove()">
-                        </div>
-                    </td>
                     <td class="px-4 py-3">{{ data_get($proveedor, 'id', '—') }}</td>
                     <td class="px-4 py-3">{{ data_get($proveedor, 'nombre', '—') }}</td>
                     <td class="px-4 py-3">{{ data_get($proveedor, 'contacto', '—') }}</td>
