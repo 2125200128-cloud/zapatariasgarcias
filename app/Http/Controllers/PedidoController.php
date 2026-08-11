@@ -205,7 +205,8 @@ class PedidoController extends ApiFrontController
 {
     try {
         // Traer datos del pedido desde la API
-        $payload = $this->client()->get('/api/pedidos/' . $id, $this->token());
+        //$payload = $this->client()->get('/api/pedidos/' . $id, $this->token());
+        $payload = $this->client()->get('/api/pedidos/' . $id . '/detalle', $this->token());
     } catch (\RuntimeException $exception) {
         return redirect('/pedido')->withErrors(['pedido' => $exception->getMessage()]);
     }
