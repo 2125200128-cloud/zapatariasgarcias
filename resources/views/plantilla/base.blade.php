@@ -95,26 +95,48 @@
         class="fixed top-0 left-0 z-40 w-64 h-screen pt-20 transition-transform -translate-x-full bg-bg-brand-dark/93 dark:bg-gray-800 border-r border-brand-brown/20 dark:border-gray-700">
         <div class="h-full px-3 pb-4 overflow-y-auto bg-brand-dark/85">
             <ul class="space-y-2 font-medium">
-                <li><a href="{{ url('/') }}" class="flex items-center p-2 rounded-lg text-white dark:text-brand-cream hover:bg-brand-brown/10 dark:hover:bg-white/10">Inicio</a></li>
+                <li class="font-serif m-2 mt-2"><a href="{{ url('/') }}" class="flex items-center p-2 rounded-lg text-white dark:text-brand-cream hover:bg-brand-brown/10 dark:hover:bg-white/10">Inicio</a></li>
 
-                <li><a href="{{ url('/pedido') }}" class="flex items-center p-2 rounded-lg text-white dark:text-brand-cream hover:bg-brand-brown/10 dark:hover:bg-white/10">Pedidos</a></li>
-                @if ($puedeGestionar)
-                    <li><a href="{{ url('/pedido/pendientes') }}" class="flex items-center p-2 pl-4 ml-3 border-l-2 border-brand-brown/20 dark:border-gray-600 rounded-lg hover:bg-brand-brown/10 dark:hover:bg-white/10 text-sm text-brand-brown dark:text-brand-cream/80">Pendientes</a></li>
-                @endif
+                <li class="font-serif m-2 mt-2">
+                    <button type="button" data-collapse-toggle="submenu-pedidos"
+                        class="flex items-center justify-between w-full p-2 rounded-lg text-white dark:text-brand-cream hover:bg-brand-brown/10 dark:hover:bg-white/10">
+                        <span>Pedidos</span>
+                        <svg class="w-3 h-3 transition-transform" fill="none" viewBox="0 0 10 6" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M1 1l4 4 4-4"/>
+                        </svg>
+                    </button>
+                    <ul id="submenu-pedidos" class="hidden py-1 space-y-1">
+                        <li class="font-serif m-2 mt-2"><a href="{{ url('/pedido') }}" class="flex items-center p-2 pl-4 ml-3 border-l-2 border-brand-brown/20 dark:border-gray-600 rounded-lg hover:bg-brand-brown/10 dark:hover:bg-white/10 text-sm text-white/80 dark:text-brand-cream/80">Todos</a></li>
+                        @if ($puedeGestionar)
+                            <li class="font-serif m-2 mt-2"><a href="{{ url('/pedido/pendientes') }}" class="flex items-center p-2 pl-4 ml-3 border-l-2 border-brand-brown/20 dark:border-gray-600 rounded-lg hover:bg-brand-brown/10 dark:hover:bg-white/10 text-sm text-white/80 dark:text-brand-cream/80">Pendientes</a></li>
+                        @endif
+                    </ul>
+                </li>
 
-                <li><a href="{{ url('/trayecto/lista') }}" class="flex items-center p-2 rounded-lg text-white dark:text-brand-cream hover:bg-brand-brown/10 dark:hover:bg-white/10">{{ $puedeGestionar ? 'Trayectos' : 'Mi trayecto' }}</a></li>
-                <li><a href="{{ url('/trayecto/flota') }}" class="flex items-center p-2 pl-4 ml-3 border-l-2 border-brand-brown/20 dark:border-gray-600 rounded-lg hover:bg-brand-brown/10 dark:hover:bg-white/10 text-sm text-brand-brown dark:text-brand-cream/80">Mapa de flota</a></li>
+                <li class="font-serif m-2 mt-2">
+                    <button type="button" data-collapse-toggle="submenu-trayectos"
+                        class="flex items-center justify-between w-full p-2 rounded-lg text-white dark:text-brand-cream hover:bg-brand-brown/10 dark:hover:bg-white/10">
+                        <span>{{ $puedeGestionar ? 'Trayectos' : 'Mi trayecto' }}</span>
+                        <svg class="w-3 h-3 transition-transform" fill="none" viewBox="0 0 10 6" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M1 1l4 4 4-4"/>
+                        </svg>
+                    </button>
+                    <ul id="submenu-trayectos" class="hidden py-1 space-y-1">
+                        <li class="font-serif m-2 mt-2"><a href="{{ url('/trayecto/lista') }}" class="flex items-center p-2 pl-4 ml-3 border-l-2 border-brand-brown/20 dark:border-gray-600 rounded-lg hover:bg-brand-brown/10 dark:hover:bg-white/10 text-sm text-white/80 dark:text-brand-cream/80">Lista</a></li>
+                        <li class="font-serif m-2 mt-2"><a href="{{ url('/trayecto/flota') }}" class="flex items-center p-2 pl-4 ml-3 border-l-2 border-brand-brown/20 dark:border-gray-600 rounded-lg hover:bg-brand-brown/10 dark:hover:bg-white/10 text-sm text-white/80 dark:text-brand-cream/80">Mapa de flota</a></li>
+                    </ul>
+                </li>
 
-                <li><a href="{{ url('/inventario') }}" class="flex items-center p-2 rounded-lg text-white dark:text-brand-cream hover:bg-brand-brown/10 dark:hover:bg-white/10">{{ $puedeGestionar ? 'Inventario' : 'Mi inventario' }}</a></li>
+                <li class="font-serif m-2 mt-2"><a href="{{ url('/inventario') }}" class="flex items-center p-2 rounded-lg text-white dark:text-brand-cream hover:bg-brand-brown/10 dark:hover:bg-white/10">{{ $puedeGestionar ? 'Inventario' : 'Mi inventario' }}</a></li>
 
                 @if ($esAdmin)
-                    <li><a href="{{ url('/producto') }}" class="flex items-center p-2 rounded-lg text-white dark:text-brand-cream hover:bg-brand-brown/10 dark:hover:bg-white/10">Productos</a></li>
-                    <li><a href="{{ url('/sucursal') }}" class="flex items-center p-2 rounded-lg text-white dark:text-brand-cream hover:bg-brand-brown/10 dark:hover:bg-white/10">Sucursales</a></li>
-                    <li><a href="{{ url('/chofer') }}" class="flex items-center p-2 rounded-lg text-white dark:text-brand-cream hover:bg-brand-brown/10 dark:hover:bg-white/10">Choferes</a></li>
-                    <li><a href="{{ url('/carro') }}" class="flex items-center p-2 rounded-lg text-white dark:text-brand-cream hover:bg-brand-brown/10 dark:hover:bg-white/10">Carros</a></li>
-                    <li><a href="{{ url('/empleado') }}" class="flex items-center p-2 rounded-lg text-white dark:text-brand-cream hover:bg-brand-brown/10 dark:hover:bg-white/10">Empleados</a></li>
-                    <li><a href="{{ url('/marca') }}" class="flex items-center p-2 rounded-lg text-white dark:text-brand-cream hover:bg-brand-brown/10 dark:hover:bg-white/10">Marcas</a></li>
-                    <li><a href="{{ url('/proveedor') }}" class="flex items-center p-2 rounded-lg text-white dark:text-brand-cream hover:bg-brand-brown/10 dark:hover:bg-white/10">Proveedores</a></li>
+                    <li class="font-serif m-2 mt-2"><a href="{{ url('/producto') }}" class="flex items-center p-2 rounded-lg text-white dark:text-brand-cream hover:bg-brand-brown/10 dark:hover:bg-white/10">Productos</a></li>
+                    <li class="font-serif m-2 mt-2"><a href="{{ url('/sucursal') }}" class="flex items-center p-2 rounded-lg text-white dark:text-brand-cream hover:bg-brand-brown/10 dark:hover:bg-white/10">Sucursales</a></li>
+                    <li class="font-serif m-2 mt-2"><a href="{{ url('/chofer') }}" class="flex items-center p-2 rounded-lg text-white dark:text-brand-cream hover:bg-brand-brown/10 dark:hover:bg-white/10">Choferes</a></li>
+                    <li class="font-serif m-2 mt-2"><a href="{{ url('/carro') }}" class="flex items-center p-2 rounded-lg text-white dark:text-brand-cream hover:bg-brand-brown/10 dark:hover:bg-white/10">Carros</a></li>
+                    <li class="font-serif m-2 mt-2"><a href="{{ url('/empleado') }}" class="flex items-center p-2 rounded-lg text-white dark:text-brand-cream hover:bg-brand-brown/10 dark:hover:bg-white/10">Empleados</a></li>
+                    <li class="font-serif m-2 mt-2"><a href="{{ url('/marca') }}" class="flex items-center p-2 rounded-lg text-white dark:text-brand-cream hover:bg-brand-brown/10 dark:hover:bg-white/10">Marcas</a></li>
+                    <li class="font-serif m-2 mt-2"><a href="{{ url('/proveedor') }}" class="flex items-center p-2 rounded-lg text-white dark:text-brand-cream hover:bg-brand-brown/10 dark:hover:bg-white/10">Proveedores</a></li>
                 @endif
             </ul>
         </div>
@@ -178,7 +200,7 @@
                         <h2 class="mb-6 text-sm font-semibold text-[#ebe2d6] uppercase">Navegación</h2>
                         <ul class="text-brand-cream/70">
                             <li class="mb-4 text-[#ebe2d6]"><a href="{{ url('/pedido') }}" class="hover:underline">Pedidos</a></li>
-                            <li><a href="{{ url('/inventario') }}" class="hover:underline text-[#ebe2d6]">Inventario</a></li>
+                            <li class="font-serif m-2 mt-2"><a href="{{ url('/inventario') }}" class="hover:underline text-[#ebe2d6]">Inventario</a></li>
                         </ul>
                     </div>
                     <div>

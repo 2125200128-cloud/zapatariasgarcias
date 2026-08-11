@@ -2,16 +2,18 @@
 
 @section('dinamico')
 
-<h1 class="text-2xl font-semibold mb-4">Mapa de flota — Trayectos activos</h1>
+<div class="flex items-center gap-3 mb-6">
+    <h1 class="text-2xl font-serif text-[#17181d]">Mapa de flota — Trayectos activos</h1>
+</div>
 
-<div class="bg-white p-4 rounded-lg shadow mb-4">
-    <div class="flex flex-wrap gap-4 text-sm mb-3">
+<div class="bg-white p-4 rounded-lg shadow mb-4 border border-brand-brown/10">
+    <div class="flex flex-wrap gap-4 text-sm mb-3 text-[#3d3228]">
         <span class="flex items-center gap-1"><span class="inline-block w-3 h-3 rounded-full" style="background:#6b7280"></span> Pendiente</span>
         <span class="flex items-center gap-1"><span class="inline-block w-3 h-3 rounded-full" style="background:#3b82f6"></span> Aceptado</span>
         <span class="flex items-center gap-1"><span class="inline-block w-3 h-3 rounded-full" style="background:#f59e0b"></span> En ruta</span>
     </div>
-    <div id="mapaFlota" style="height: 600px; border-radius: 0.5rem;"></div>
-    <p id="mapaFlotaVacio" class="text-gray-500 text-sm mt-3 hidden">No hay trayectos activos en este momento.</p>
+    <div id="mapaFlota" class="relative z-0" style="height: 600px; border-radius: 0.5rem;"></div>
+    <p id="mapaFlotaVacio" class="text-gray-400 italic text-sm mt-3 hidden">No hay trayectos activos en este momento.</p>
 </div>
 
 <script>

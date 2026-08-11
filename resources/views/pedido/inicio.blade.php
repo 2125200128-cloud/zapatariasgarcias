@@ -5,11 +5,16 @@
 <!-- titulo de página / imagen y nombre -->
 <div class="flex items-center justify-between mb-6">
     <div class="flex items-center gap-3">
-        <img src="{{ asset('images/pedidos-negro.png') }}" alt="Inicio-pedidos" class="w-20 h-20 m-6">
-        <h1 class="text-4xl font-serif text-[#17181d]">Pedidos</h1>
+        <a href=" {{ url('/') }} ">
+            <img src="{{ asset('images/pedidos-formulario.png') }}" alt="Inicio-pedidos" class="w-20 h-20 m-6">
+        </a>
+        <div>
+            <h1 class="text-4xl font-serif text-[#17181d]">Pedidos</h1>
+            <p class="font-serif text-[#715b49]">Gestiona y supervisa los pedidos realizados en las sucursales</p>
+        </div>
     </div>
     <div class="flex items-center gap-3">
-        <span class="text-sm text-[#3d3228]">{{ count($pedidos ?? []) }} registros</span>
+        <span class="text-sm text-[#3d3228] mt-2 p-5">{{ count($pedidos ?? []) }} registros</span>
         <a href="{{ url('/pedido/formulario') }}" class="bg-brand-black-coffe text-white px-4 py-2 rounded-lg text-sm hover:bg-brand-brown-dark font-semibold">
             Nuevo pedido
         </a>
@@ -17,28 +22,53 @@
 </div>
 <!-- titulo de página -->
 
-<! -- Search branch -->
-<form class="flex items-center max-w-sm mb-4 space-x-2">
-    <label for="simple-search" class="sr-only">Buscar</label>
-    <div class="relative w-full">
-        <div class="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none">
-            <svg class=" w-4 h-4 text-brand-brown/60" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                <path stroke="currentColor" stroke-linecap="round" stroke-width="2" d="m21 21-3.5-3.5M17 10a7 7 0 1 1-14 0 7 7 0 0 1 14 0Z"/>
-            </svg>
+<form method="GET" action="{{ url('/pedido') }}" class="bg-white rounded-lg shadow border border-brand-brown/10 p-4 mb-4">
+    <div class="flex flex-wrap items-end gap-3">
+        <div class="flex-1 min-w-[220px]">
+            <label for="busqueda" class="block text-xs font-semibold text-[#3d3228] mb-1">Sucursal</label>
+            <div class="relative">
+                <div class="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none">
+                    <svg class="w-4 h-4 text-brand-brown/60" fill="none" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                        <path stroke="currentColor" stroke-linecap="round" stroke-width="2" d="m21 21-3.5-3.5M17 10a7 7 0 1 1-14 0 7 7 0 0 1 14 0Z"/>
+                    </svg>
+                </div>
+                <input type="text" name="busqueda" id="busqueda" value="{{ request('busqueda') }}"
+                    class="ps-9 px-3 py-2 bg-white border border-brand-brown/20 rounded-lg text-[#17181d] text-sm focus:ring-2 focus:ring-brand-brown focus:border-brand-brown block w-full placeholder:text-gray-400"
+                    placeholder="Buscar sucursal...">
+            </div>
         </div>
-        <input type="text" id="simple-search"
-            class="px-3 py-2.5 bg-white border border-brand-brown/20 rounded-lg ps-9 text-[#17181d] text-sm focus:ring-2 focus:ring-brand-brown focus:border-brand-brown block w-full placeholder:text-gray-400"
-            placeholder="Buscar sucursal..." />
-    </div>
-    <button type="submit"
-        class="inline-flex items-center justify-center shrink-0 text-white bg-brand-black-coffe hover:bg-brand-brown-dark focus:ring-4 focus:ring-brand-brown/30 shadow rounded-lg w-10 h-10 focus:outline-none">
-        <svg class="w-5 h-5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-            <path stroke="currentColor" stroke-linecap="round" stroke-width="2" d="m21 21-3.5-3.5M17 10a7 7 0 1 1-14 0 7 7 0 0 1 14 0Z"/>
-        </svg>
-        <span class="sr-only">Buscar</span>
-    </button>
-</form>
 
+        <div class="min-w-[160px]">
+            <label for="fecha" class="block text-xs font-semibold text-[#3d3228] mb-1">Fecha</label>
+            <input type="date" name="fecha" id="fecha" value="{{ request('fecha') }}"
+                class="px-3 py-2 bg-white border border-brand-brown/20 rounded-lg text-[#17181d] text-sm focus:ring-2 focus:ring-brand-brown focus:border-brand-brown block w-full">
+        </div>
+
+        <div class="min-w-[160px]">
+            <label for="estatus" class="block text-xs font-semibold text-[#3d3228] mb-1">Estatus</label>
+            <select name="estatus" id="estatus"
+                class="px-3 py-2 bg-white border border-brand-brown/20 rounded-lg text-[#17181d] text-sm focus:ring-2 focus:ring-brand-brown focus:border-brand-brown block w-full">
+                <option value="">Todos</option>
+                <option value="Pendiente" @selected(request('estatus') === 'Pendiente')>Pendiente</option>
+                <option value="Realizado" @selected(request('estatus') === 'Realizado')>Realizado</option>
+                <option value="Cancelado" @selected(request('estatus') === 'Cancelado')>Cancelado</option>
+            </select>
+        </div>
+
+        <div class="flex gap-2">
+            <button type="submit"
+                class="inline-flex items-center justify-center bg-brand-brown hover:bg-brand-brown-dark text-white px-4 py-2 rounded-lg text-sm font-semibold">
+                Filtrar
+            </button>
+            @if (request('busqueda') || request('fecha') || request('estatus'))
+                <a href="{{ url('/pedido') }}"
+                    class="inline-flex items-center justify-center border border-brand-brown/30 text-brand-brown hover:bg-brand-brown/10 px-4 py-2 rounded-lg text-sm">
+                    Limpiar
+                </a>
+            @endif
+        </div>
+    </div>
+</form>
 
 @if (session('success'))
     <div class="mb-4 rounded-lg border border-green-200 bg-green-50 p-3 text-sm text-green-700">
@@ -79,7 +109,7 @@
                                     × {{ data_get($detalle, 'cantidad_solicitada', '—') }}
                                 </li>
                             @empty
-                                <li class="text-gray-400-italic">Sin productos</li>
+                                <li class="text-gray-400 italic">Sin productos</li>
                             @endforelse
                         </ul>
                     </td>

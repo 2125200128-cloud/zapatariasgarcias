@@ -2,7 +2,20 @@
 
 @section('dinamico')
 
-<div class="text-2xl font-serif mt-1 p-4 text-[#88520f]">
+<div class="relative rounded-lg shadow m-2 overflow-hidden h-75 bg-cover bg-center bg-no-repeat"
+     style="background-image: url('{{ asset('images/zapatera.png') }}')">
+
+    <div class="relative h-full flex items-center px-10">
+        <div>
+            <h2 class="text-3xl font-serif text-[#17181d]">Bienvenido a</h2>
+            <h2 class="text-6xl font-serif text-[#17181d]">Hermanos García</h2>
+            <p class="text-2xl font-serif text-[#af7442] mt-4">Administrador</p>
+            <p class="text-1xl font-brand text-[#17181d] mt-4">Controla y supervisa las operaciones de tu negocio en tiepo real</p>
+        </div>
+    </div>
+</div>
+
+<div class="text-2xl font-serif mt-8 p-4 text-[#88520f]">
     <h4>Resumen del Día</h4>
 </div>
 
@@ -10,7 +23,9 @@
 
     @if ($esMatrizOAdmin)
         <div class="bg-brand-brown/90 p-5 rounded-lg shadow m-1 border border-[#af7442] flex items-center gap-3">
-            <img src="{{ asset('images/sucursal.png') }}" alt="Sucursales" class="w-13 h-13 m-2">
+            <a href="{{ url('/sucursal') }}">
+                <img src="{{ asset('images/sucursal.png') }}" alt="Sucursales" class="w-13 h-13 m-2">
+            </a>
             <div>
                 <p class="text-sm text-[#381e0a] font-serif">Sucursales activas</p>
                 <p class="text-3xl font-semibold text-[#17181d] mt-1">{{ data_get($kpis, 'sucursales', 0) }}</p>
@@ -18,7 +33,9 @@
         </div>
 
         <div class="bg-brand-brown/90 p-5 rounded-lg shadow m-1 border border-[#af7442] flex items-center gap-3">
-            <img src="{{ asset('images/pedidos.png') }}" alt="Pedidos" class="w-13 h-13 m-2">
+            <a href="{{ url('/pedido/pendientes') }}">
+                <img src="{{ asset('images/pedidos.png') }}" alt="Pedidos" class="w-13 h-13 m-2">    
+            </a>
             <div>
                 <p class="text-sm text-[#381e0a] font-serif">Pedidos pendientes</p>
                 <p class="text-3xl font-semibold text-[#17181d] mt-1">{{ data_get($kpis, 'pedidosPendientes', 0) }}</p>
@@ -26,7 +43,9 @@
         </div>
 
         <div class="bg-brand-brown/90 p-5 rounded-lg shadow m-1 border border-[#af7442] flex items-center gap-3">
-            <img src="{{ asset('images/products.png') }}" alt="Productos" class="w-13 h-13 m-2">
+            <a href="{{ url('/producto') }}">
+                <img src="{{ asset('images/products.png') }}" alt="Productos" class="w-13 h-13 m-2">
+            </a>
             <div>
                 <p class="text-sm text-[#381e0a] font-serif">Productos activos</p>
                 <p class="text-3xl font-semibold text-[#17181d] mt-1">{{ data_get($kpis, 'productos', 0) }}</p>
@@ -34,7 +53,9 @@
         </div>
 
         <div class="bg-brand-brown/90 p-5 rounded-lg shadow m-1 border border-[#af7442] flex items-center gap-3">
-            <img src="{{ asset('images/choferes.png') }}" alt="Choferes" class="w-14 h-14 m-2">
+            <a href="{{ url('/chofer') }}">
+                <img src="{{ asset('images/choferes.png') }}" alt="Choferes" class="w-14 h-14 m-2">
+            </a>    
             <div>
                 <p class="text-sm text-[#381e0a] font-serif">Choferes activos</p>
                 <p class="text-3xl font-semibold text-[#17181d] mt-1">{{ data_get($kpis, 'choferes', 0) }}</p>
@@ -82,7 +103,7 @@
     </div>
 @endif
 
-<div class="text-2xl font-serif mt-1 p-4 text-[#88520f]">
+<div class="text-2xl font-serif mt-8 p-4 text-[#88520f]">
     Actividades de sucursales
 </div>
 
