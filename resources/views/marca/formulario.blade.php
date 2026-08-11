@@ -39,7 +39,7 @@
 
         <div class="sm:col-span-2">
             <label class="block text-sm font-medium text-gray-700 mb-1">Imagen</label>
-            <input type="file" name="imagen" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
+            <input type="file" name="imagen" accept="image/*" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
         </div>
 
         <div class="sm:col-span-2 flex justify-end gap-3">
