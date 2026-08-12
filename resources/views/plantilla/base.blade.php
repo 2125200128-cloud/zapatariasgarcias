@@ -154,7 +154,7 @@
                             class="flex items-center p-2 rounded-lg text-white dark:text-brand-cream hover:bg-brand-brown/10 dark:hover:bg-white/10">Choferes</a>
                     </li>
                     <li class="font-serif m-2 mt-2"><a href="{{ url('/carro') }}"
-                            class="flex items-center p-2 rounded-lg text-white dark:text-brand-cream hover:bg-brand-brown/10 dark:hover:bg-white/10">Carros</a>
+                            class="flex items-center p-2 rounded-lg text-white dark:text-brand-cream hover:bg-brand-brown/10 dark:hover:bg-white/10">Vehículos</a>
                     </li>
                     <li class="font-serif m-2 mt-2"><a href="{{ url('/empleado') }}"
                             class="flex items-center p-2 rounded-lg text-white dark:text-brand-cream hover:bg-brand-brown/10 dark:hover:bg-white/10">Empleados</a>

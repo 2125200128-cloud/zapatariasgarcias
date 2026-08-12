@@ -3,15 +3,17 @@
 @section('dinamico')
 
 <div class="flex items-center justify-between mb-4">
-    <h1 class="text-2xl font-semibold text-gray-800">{{ $puedeGestionar ? 'Lista de trayectos' : 'Mis trayectos' }}</h1>
+    <h1 class="text-2xl font-semibold text-gray-800">
+        {{ ($puedeGestionar ?? false) ? 'Lista de trayectos' : 'Mis trayectos' }}
+    </h1>
     <div class="flex items-center gap-3">
         <span class="text-sm text-gray-500">{{ count($trayectos ?? []) }} registros</span>
-        @if ($puedeGestionar)
-            <a href="{{ url('/pedido/pendientes') }}" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 text-sm">
+        @if ($puedeGestionar ?? false)
+            <a href="{{ url('/pedido/pendientes') }}" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors shadow-sm">
                 Pedidos pendientes de aceptar
             </a>
         @endif
-        <a href="{{ url('/trayecto/flota') }}" class="border border-gray-300 px-4 py-2 rounded-lg hover:bg-gray-50 text-sm">
+        <a href="{{ url('/trayecto/flota') }}" class="border border-gray-300 bg-white text-gray-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors shadow-sm">
             Ver mapa de flota
         </a>
     </div>
@@ -29,7 +31,8 @@
     </div>
 @endif
 
-<div class="bg-white rounded-lg shadow overflow-x-auto">
+{{-- Tabla Principal --}}
+<div class="bg-white rounded-lg shadow-sm overflow-x-auto border border-gray-100">
     <table class="min-w-full text-sm text-left">
         <thead class="bg-gray-50 text-gray-600 uppercase text-xs">
             <tr>
@@ -38,48 +41,86 @@
                 <th class="px-4 py-3">Carro</th>
                 <th class="px-4 py-3">Pedido</th>
                 <th class="px-4 py-3 w-56">Progreso</th>
-                <th class="px-4 py-3">Acciones</th>
+                <th class="px-4 py-3 text-center">Acciones</th>
             </tr>
         </thead>
         <tbody class="divide-y divide-gray-100">
             @php $pasosTrayecto = ['Pendiente', 'Aceptado', 'En ruta', 'Entregado']; @endphp
             @forelse ($trayectos ?? [] as $trayecto)
                 @php
+                    // Lógica original de cálculo de sucursal
                     $sucursalDestinoIdTrayecto = data_get($trayecto, 'pedido.empleado.sucursales.0.id');
-                    $esMiSucursalTrayecto = $sucursalDestinoIdTrayecto && $sucursalDestinoIdTrayecto == data_get($apiUser, 'sucursal.id');
+                    $esMiSucursalTrayecto = $sucursalDestinoIdTrayecto && $sucursalDestinoIdTrayecto == data_get($apiUser ?? null, 'sucursal.id');
+
+                    // Nombres y placas formateados
+                    $nombreChofer = trim(data_get($trayecto, 'chofer.nombre', '—') . ' ' . data_get($trayecto, 'chofer.apellido', ''));
+                    if (empty($nombreChofer)) { $nombreChofer = '—'; }
+                    $carroPlacas   = data_get($trayecto, 'carro.placas', '—');
+                    $pedidoId      = data_get($trayecto, 'pedido_id', '—');
+                    $estatusActual = data_get($trayecto, 'estatus', 'Pendiente');
+
+                    // Paquete de datos para el Modal
+                    $datosModal = [
+                        'id'       => data_get($trayecto, 'id', '—'),
+                        'chofer'   => $nombreChofer,
+                        'carro'    => $carroPlacas,
+                        'pedido'   => '#' . $pedidoId,
+                        'estatus'  => $estatusActual,
+                    ];
                 @endphp
-                <tr>
-                    <td class="px-4 py-3">{{ data_get($trayecto, 'id', '—') }}</td>
-                    <td class="px-4 py-3">{{ data_get($trayecto, 'chofer.nombre', '—') }} {{ data_get($trayecto, 'chofer.apellido', '') }}</td>
-                    <td class="px-4 py-3">{{ data_get($trayecto, 'carro.placas', '—') }}</td>
-                    <td class="px-4 py-3">#{{ data_get($trayecto, 'pedido_id', '—') }}</td>
+                <tr class="hover:bg-gray-50/60 transition-colors">
+                    
+                    {{-- ID Discreto --}}
+                    <td class="px-4 py-3 font-semibold text-gray-400">#{{ data_get($trayecto, 'id', '—') }}</td>
+
+                    {{-- Chofer --}}
+                    <td class="px-4 py-3 font-medium text-gray-800 capitalize">
+                        {{ $nombreChofer }}
+                    </td>
+
+                    {{-- Carro --}}
+                    <td class="px-4 py-3 font-mono text-gray-700">
+                        <span class="inline-block px-2 py-0.5 rounded bg-gray-100 border border-gray-200 text-xs font-semibold">
+                            {{ $carroPlacas }}
+                        </span>
+                    </td>
+
+                    {{-- Pedido --}}
+                    <td class="px-4 py-3 font-semibold text-blue-600">
+                        #{{ $pedidoId }}
+                    </td>
+
+                    {{-- Progreso / Estatus --}}
                     <td class="px-4 py-3">
-                        @if (data_get($trayecto, 'estatus') === 'Cancelado')
-                            <span class="inline-flex items-center gap-1 text-red-700 bg-red-50 border border-red-200 px-2 py-1 rounded-full text-xs font-medium">
-                                ✕ Cancelado
+                        @if ($estatusActual === 'Cancelado')
+                            <span class="inline-flex items-center gap-1.5 text-red-700 bg-red-50 border border-red-200 px-2.5 py-1 rounded-full text-xs font-semibold">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                </svg>
+                                Cancelado
                             </span>
                         @else
                             @php
-                                $pasoActual = array_search(data_get($trayecto, 'estatus'), $pasosTrayecto);
+                                $pasoActual = array_search($estatusActual, $pasosTrayecto);
                                 $pasoActual = $pasoActual === false ? 0 : $pasoActual;
                             @endphp
                             <div class="w-48">
                                 <div class="flex items-center">
                                     @foreach ($pasosTrayecto as $i => $paso)
-                                        <div class="w-5 h-5 rounded-full flex items-center justify-center shrink-0 text-[10px] leading-none
-                                            {{ $i <= $pasoActual ? 'bg-blue-600 text-white' : 'bg-white border-2 border-gray-300' }}">
+                                        <div class="w-5 h-5 rounded-full flex items-center justify-center shrink-0 text-[10px] font-bold leading-none transition-colors
+                                            {{ $i <= $pasoActual ? 'bg-blue-600 text-white shadow-sm' : 'bg-white border-2 border-gray-300 text-transparent' }}">
                                             @if ($i <= $pasoActual)
-                                                &#10003;
+                                                ✓
                                             @endif
                                         </div>
                                         @if (!$loop->last)
-                                            <div class="flex-1 h-0.5 {{ $i < $pasoActual ? 'bg-blue-600' : 'bg-gray-300' }}"></div>
+                                            <div class="flex-1 h-0.5 {{ $i < $pasoActual ? 'bg-blue-600' : 'bg-gray-200' }}"></div>
                                         @endif
                                     @endforeach
                                 </div>
                                 <div class="flex mt-1">
                                     @foreach ($pasosTrayecto as $i => $paso)
-                                        <span class="flex-1 text-center text-[9px] leading-tight {{ $i === $pasoActual ? 'font-semibold text-gray-800' : 'text-gray-400' }}">
+                                        <span class="flex-1 text-center text-[9px] leading-tight {{ $i === $pasoActual ? 'font-bold text-blue-600' : 'text-gray-400' }}">
                                             {{ $paso }}
                                         </span>
                                     @endforeach
@@ -87,38 +128,152 @@
                             </div>
                         @endif
                     </td>
-                    <td class="px-4 py-3 whitespace-nowrap space-x-2">
-                        @if ($puedeGestionar)
-                            <a href="{{ url('/trayecto/editar/' . data_get($trayecto, 'id', '')) }}" class="text-blue-600 hover:underline text-sm">Editar</a>
-                        @endif
-                        <a href="{{ url('/pedido/' . data_get($trayecto, 'pedido_id', '') . '/pdf') }}" class="text-gray-700 hover:underline text-sm" target="_blank">
-                            Ver nota
-                        </a>
-                        @if ($puedeGestionar)
-                            <a href="{{ url('/trayecto/' . data_get($trayecto, 'id', '') . '/compartir') }}" class="text-green-700 hover:underline text-sm" target="_blank">
-                                Enviar ubicación al chofer
+
+                    {{-- Acciones --}}
+                    <td class="px-4 py-3 text-center whitespace-nowrap">
+                        <div class="flex items-center justify-center gap-2 text-sm">
+                            
+                            {{-- Ícono VER (Detalle Modal) --}}
+                            <button type="button" 
+                                    data-item='@json($datosModal)'
+                                    onclick="abrirModalTrayecto(this)" 
+                                    class="p-1.5 text-gray-500 hover:bg-gray-100 hover:text-blue-600 rounded-lg transition-colors" 
+                                    title="Ver detalle de trayecto">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                </svg>
+                            </button>
+
+                            {{-- Editar (Si puede gestionar) --}}
+                            @if ($puedeGestionar ?? false)
+                                <a href="{{ url('/trayecto/editar/' . data_get($trayecto, 'id', '')) }}" class="text-blue-600 hover:underline font-medium">
+                                    Editar
+                                </a>
+                            @endif
+
+                            {{-- Ver nota (PDF) --}}
+                            <a href="{{ url('/pedido/' . data_get($trayecto, 'pedido_id', '') . '/pdf') }}" class="text-gray-700 hover:underline font-medium" target="_blank">
+                                Ver nota
                             </a>
-                        @endif
-                        @if (data_get($trayecto, 'estatus') === 'En ruta' && ($esAdmin || $esMiSucursalTrayecto))
-                            <form action="{{ url('/trayecto/' . data_get($trayecto, 'id', '') . '/confirmar-llegada') }}" method="POST" class="inline">
-                                @csrf
-                                <button type="submit" class="text-emerald-700 hover:underline text-sm font-medium">Llegó</button>
-                            </form>
-                        @endif
-                        @if ($puedeGestionar && !in_array(data_get($trayecto, 'estatus'), ['Cancelado', 'Entregado']))
-                            <a href="{{ url('/trayecto/mostrar/' . data_get($trayecto, 'id', '')) }}" class="text-red-600 hover:underline text-sm">
-                                Cancelar
-                            </a>
-                        @endif
+
+                            {{-- Enviar ubicación al chofer --}}
+                            @if ($puedeGestionar ?? false)
+                                <a href="{{ url('/trayecto/' . data_get($trayecto, 'id', '') . '/compartir') }}" class="text-emerald-600 hover:underline font-medium" target="_blank">
+                                    Enviar ubicación al chofer
+                                </a>
+                            @endif
+
+                            {{-- Formulario Confirmar Llegada --}}
+                            @if ($estatusActual === 'En ruta' && (($esAdmin ?? false) || $esMiSucursalTrayecto))
+                                <form action="{{ url('/trayecto/' . data_get($trayecto, 'id', '') . '/confirmar-llegada') }}" method="POST" class="inline">
+                                    @csrf
+                                    <button type="submit" class="bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200 px-2 py-0.5 rounded text-xs font-semibold transition-colors">
+                                        Llegó
+                                    </button>
+                                </form>
+                            @endif
+
+                            {{-- Cancelar --}}
+                            @if (($puedeGestionar ?? false) && !in_array($estatusActual, ['Cancelado', 'Entregado']))
+                                <a href="{{ url('/trayecto/mostrar/' . data_get($trayecto, 'id', '')) }}" class="text-red-600 hover:underline font-medium">
+                                    Cancelar
+                                </a>
+                            @endif
+
+                        </div>
                     </td>
                 </tr>
             @empty
                 <tr>
-                    <td colspan="6" class="px-4 py-6 text-center text-gray-500">No hay trayectos registrados.</td>
+                    <td colspan="6" class="px-4 py-6 text-center text-gray-500">
+                        No hay trayectos registrados.
+                    </td>
                 </tr>
             @endforelse
         </tbody>
     </table>
 </div>
+
+{{-- Modal de Detalle de Trayecto --}}
+<div id="modalTrayecto" class="fixed inset-0 z-50 hidden bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl transition-all">
+        
+        {{-- Header Modal --}}
+        <div class="flex items-center justify-between border-b border-gray-100 pb-3">
+            <div>
+                <h3 class="text-lg font-bold text-gray-900">Detalle del Trayecto</h3>
+                <span id="modal-id" class="text-xs text-gray-400"></span>
+            </div>
+            <button onclick="cerrarModalTrayecto()" class="rounded-lg p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-900">
+                ✕
+            </button>
+        </div>
+
+        {{-- Contenido del Modal --}}
+        <div class="mt-4 space-y-3 text-sm">
+            <div class="bg-gray-50 p-3.5 rounded-xl border border-gray-100 space-y-2">
+                <span class="block text-xs font-semibold text-gray-500 uppercase tracking-wider">Asignación</span>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <span class="block text-xs text-gray-500">Chofer</span>
+                        <strong id="modal-chofer" class="text-gray-900"></strong>
+                    </div>
+                    <div>
+                        <span class="block text-xs text-gray-500">Vehículo (Placas)</span>
+                        <strong id="modal-carro" class="text-gray-900 font-mono"></strong>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-blue-50/60 p-3.5 rounded-xl border border-blue-100 space-y-2">
+                <span class="block text-xs font-semibold text-blue-700 uppercase tracking-wider">Pedido & Estado</span>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <span class="block text-xs text-gray-500">Pedido ID</span>
+                        <strong id="modal-pedido" class="text-blue-600 font-bold text-base"></strong>
+                    </div>
+                    <div>
+                        <span class="block text-xs text-gray-500">Estatus Actual</span>
+                        <span id="modal-estatus" class="block pt-1"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {{-- Footer Modal --}}
+        <div class="mt-6 flex justify-end">
+            <button onclick="cerrarModalTrayecto()" class="px-4 py-2 bg-gray-200 text-gray-800 text-sm font-medium rounded-lg hover:bg-gray-300 transition-colors">
+                Cerrar
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+    function abrirModalTrayecto(btn) {
+        const item = JSON.parse(btn.getAttribute('data-item'));
+
+        document.getElementById('modal-id').innerText = 'ID Trayecto: #' + (item.id || 'N/A');
+        document.getElementById('modal-chofer').innerText = item.chofer || '—';
+        document.getElementById('modal-carro').innerText = item.carro || '—';
+        document.getElementById('modal-pedido').innerText = item.pedido || '—';
+
+        const contenedorEstatus = document.getElementById('modal-estatus');
+        if (item.estatus === 'Cancelado') {
+            contenedorEstatus.innerHTML = '<span class="inline-flex items-center rounded-full bg-red-50 px-2.5 py-0.5 text-xs font-semibold text-red-700 ring-1 ring-inset ring-red-600/20">Cancelado</span>';
+        } else if (item.estatus === 'Entregado') {
+            contenedorEstatus.innerHTML = '<span class="inline-flex items-center rounded-full bg-green-50 px-2.5 py-0.5 text-xs font-semibold text-green-700 ring-1 ring-inset ring-green-600/20">Entregado</span>';
+        } else {
+            contenedorEstatus.innerHTML = '<span class="inline-flex items-center rounded-full bg-blue-50 px-2.5 py-0.5 text-xs font-semibold text-blue-700 ring-1 ring-inset ring-blue-600/20">' + item.estatus + '</span>';
+        }
+
+        document.getElementById('modalTrayecto').classList.remove('hidden');
+    }
+
+    function cerrarModalTrayecto() {
+        document.getElementById('modalTrayecto').classList.add('hidden');
+    }
+</script>
 
 @endsection
