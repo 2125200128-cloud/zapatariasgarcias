@@ -6,7 +6,6 @@
     <div class="mb-6 flex items-center justify-between">
         <div>
             <h1 class="text-2xl font-semibold text-gray-800">Nuevo chofer</h1>
-            <p class="text-sm text-gray-500">Registra un chofer en la API de ZAPATERIA_API.</p>
         </div>
         <a href="{{ url('/chofer') }}" class="rounded-lg border border-gray-300 px-4 py-2 text-sm text-gray-600 hover:bg-gray-50">Volver</a>
     </div>

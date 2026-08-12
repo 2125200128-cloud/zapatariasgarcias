@@ -6,7 +6,6 @@
     <div class="mb-6 flex items-center justify-between">
         <div>
             <h1 class="text-2xl font-semibold text-gray-800">Editar pedido</h1>
-            <p class="text-sm text-gray-500">Actualiza la información del pedido en la API.</p>
         </div>
         <a href="{{ url('/pedido') }}" class="rounded-lg border border-gray-300 px-4 py-2 text-sm text-gray-600 hover:bg-gray-50">Volver</a>
     </div>
@@ -51,7 +50,7 @@
         <h2 class="text-sm font-semibold text-gray-700 mb-2">Productos solicitados</h2>
 
         <div id="filasProductos" class="space-y-2 mb-2">
-            @forelse (data_get($pedido, 'detallePedidos', []) as $detalle)
+            @forelse (data_get($pedido, 'detalle_pedidos', []) as $detalle)
                 <div class="fila-producto flex gap-2">
                     <select name="producto_id[]" class="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm">
                         <option value="">-- Producto --</option>

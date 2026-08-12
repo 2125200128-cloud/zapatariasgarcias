@@ -159,9 +159,16 @@
 
                             {{-- Enviar ubicación al chofer --}}
                             @if ($puedeGestionar ?? false)
-                                <a href="{{ url('/trayecto/' . data_get($trayecto, 'id', '') . '/compartir') }}" class="text-emerald-600 hover:underline font-medium" target="_blank">
+                                @php
+                                    $urlCompartir = \Illuminate\Support\Facades\URL::temporarySignedRoute(
+                                        'trayecto.compartir',
+                                        now()->addHours(48),
+                                        ['id' => data_get($trayecto, 'id', '')]
+                                    );
+                                @endphp
+                                <button type="button" class="copiar-link text-emerald-600 hover:underline font-medium" data-link="{{ $urlCompartir }}">
                                     Enviar ubicación al chofer
-                                </a>
+                                </button>
                             @endif
 
                             {{-- Formulario Confirmar Llegada --}}
@@ -274,6 +281,18 @@
     function cerrarModalTrayecto() {
         document.getElementById('modalTrayecto').classList.add('hidden');
     }
+
+    document.querySelectorAll('.copiar-link').forEach((boton) => {
+        const textoOriginal = boton.textContent;
+        boton.addEventListener('click', () => {
+            navigator.clipboard.writeText(boton.dataset.link).then(() => {
+                boton.textContent = '¡Link copiado!';
+                setTimeout(() => { boton.textContent = textoOriginal; }, 2000);
+            }).catch(() => {
+                alert('No se pudo copiar el link. Cópialo manualmente:\n\n' + boton.dataset.link);
+            });
+        });
+    });
 </script>
 
 @endsection

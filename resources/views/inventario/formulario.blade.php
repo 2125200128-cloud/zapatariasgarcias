@@ -6,7 +6,7 @@
     <div class="mb-6 flex items-center justify-between">
         <div>
             <h1 class="text-2xl font-semibold text-gray-800">Nuevo registro de inventario</h1>
-            <p class="text-sm text-gray-500">Agrega un nuevo registro de inventario en la API de ZAPATERIA_API.</p>
+            <p class="text-sm text-gray-500">Agrega stock al inventario de la matriz.</p>
         </div>
         <a href="{{ url('/inventario') }}" class="rounded-lg border border-gray-300 px-4 py-2 text-sm text-gray-600 hover:bg-gray-50">Volver</a>
     </div>
@@ -17,41 +17,34 @@
         </div>
     @endif
 
-    <form action="{{ url('/inventario/guardar') }}" method="POST" class="grid gap-4 sm:grid-cols-2">
+    <form id="formInventario" action="{{ url('/inventario/guardar') }}" method="POST" class="grid gap-4 sm:grid-cols-2">
         @csrf
 
-        <div>
+        <div class="sm:col-span-2">
             <label class="block text-sm font-medium text-gray-700 mb-1">Sucursal</label>
-            <select name="sucursal_id" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" required>
-                <option value="">-- Selecciona --</option>
-                @foreach ($sucursales ?? [] as $sucursal)
-                    <option value="{{ data_get($sucursal, 'id', '') }}" {{ old('sucursal_id') == data_get($sucursal, 'id', '') ? 'selected' : '' }}>
-                        {{ data_get($sucursal, 'nombre', 'Sucursal') }}
-                    </option>
+            <input type="text" value="{{ data_get($matriz, 'nombre', 'Matriz') }}" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-gray-50" disabled>
+            <p class="text-xs text-gray-400 mt-1">El inventario solo se captura a mano para la matriz — las sucursales reciben stock únicamente cuando se les entrega un pedido.</p>
+        </div>
+
+        <div class="sm:col-span-2">
+            <label class="block text-sm font-medium text-gray-700 mb-1">Producto</label>
+            <select id="selectorProducto" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
+                <option value="">-- Elige un producto --</option>
+                @foreach ($nombresProductos ?? [] as $nombre)
+                    <option value="{{ $nombre }}">{{ $nombre }}</option>
                 @endforeach
             </select>
         </div>
 
-        <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Producto</label>
-            <input type="text" id="productoBuscar" placeholder="Buscar por nombre, marca o talla..."
-                class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mb-2">
-            <select name="producto_id" id="producto_id" size="8"
-                class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" required>
-                <option value="">-- Selecciona --</option>
-                @foreach ($productos ?? [] as $producto)
-                    <option value="{{ data_get($producto, 'id', '') }}"
-                        data-buscar="{{ strtolower(data_get($producto, 'nombre', '') . ' ' . data_get($producto, 'marca.nombre', '') . ' ' . data_get($producto, 'talla', '')) }}"
-                        {{ old('producto_id') == data_get($producto, 'id', '') ? 'selected' : '' }}>
-                        {{ data_get($producto, 'nombre', 'Producto') }} — {{ data_get($producto, 'marca.nombre', 'Sin marca') }} (talla {{ data_get($producto, 'talla', '—') }})
-                    </option>
-                @endforeach
-            </select>
+        <div id="tallasProducto" class="sm:col-span-2 hidden">
+            <label class="block text-sm font-medium text-gray-700 mb-1">Talla</label>
+            <div id="chipsTallas" class="flex flex-wrap gap-2"></div>
+            <input type="hidden" name="producto_id" id="producto_id" value="{{ old('producto_id') }}" required>
         </div>
 
         <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">Stock</label>
-            <input type="number" name="stock" value="{{ old('stock') }}" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" required>
+            <input type="number" name="stock" min="0" value="{{ old('stock') }}" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" required>
         </div>
 
         <div>
@@ -71,16 +64,65 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', () => {
-    const buscador = document.getElementById('productoBuscar');
-    const select = document.getElementById('producto_id');
+    // Mismo patrón que /pedido/formulario: agrupado por nombre de producto,
+    // se elige la talla como chip en vez de escanear una lista plana.
+    const productos = @json($productos ?? []);
 
-    buscador.addEventListener('input', () => {
-        const termino = buscador.value.trim().toLowerCase();
-        Array.from(select.options).forEach(opcion => {
-            if (!opcion.value) return;
-            opcion.style.display = opcion.dataset.buscar.includes(termino) ? '' : 'none';
-        });
+    const porNombre = {};
+    productos.forEach((p) => {
+        const nombre = p.nombre || 'Producto';
+        if (!porNombre[nombre]) porNombre[nombre] = [];
+        porNombre[nombre].push({ id: p.id, talla: p.talla ?? '—' });
     });
+
+    const selectorProducto = document.getElementById('selectorProducto');
+    const bloqueTallas = document.getElementById('tallasProducto');
+    const chipsTallas = document.getElementById('chipsTallas');
+    const productoIdInput = document.getElementById('producto_id');
+
+    function renderChips() {
+        const nombre = selectorProducto.value;
+        chipsTallas.innerHTML = '';
+        bloqueTallas.classList.toggle('hidden', !nombre);
+        if (!nombre) {
+            productoIdInput.value = '';
+            return;
+        }
+
+        (porNombre[nombre] || []).forEach((variante) => {
+            const seleccionada = String(variante.id) === String(productoIdInput.value);
+
+            const chip = document.createElement('button');
+            chip.type = 'button';
+            chip.textContent = variante.talla;
+            chip.className = 'px-3 py-1.5 rounded-lg text-sm border ' + (
+                seleccionada
+                    ? 'border-blue-600 bg-blue-600 text-white'
+                    : 'border-gray-300 text-gray-700 hover:border-blue-400 hover:bg-blue-50'
+            );
+
+            chip.addEventListener('click', () => {
+                productoIdInput.value = variante.id;
+                renderChips();
+            });
+
+            chipsTallas.appendChild(chip);
+        });
+    }
+
+    selectorProducto.addEventListener('change', () => {
+        productoIdInput.value = '';
+        renderChips();
+    });
+
+    document.getElementById('formInventario').addEventListener('submit', (evento) => {
+        if (!productoIdInput.value) {
+            evento.preventDefault();
+            alert('Elige un producto y una talla antes de guardar.');
+        }
+    });
+
+    renderChips();
 });
 </script>
 

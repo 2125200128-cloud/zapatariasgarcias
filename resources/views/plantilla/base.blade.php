@@ -27,7 +27,7 @@
 
         // Toma la URL de Cloudinary enviada por la API
         $rawFoto = $apiUser['foto'] ?? $apiUser['imagen'] ?? null;
-        $userFoto = !empty($rawFoto) ? $rawFoto : asset('images/carlos.png');
+        $userFoto = (!empty($rawFoto) && $rawFoto !== 'sin-imagen.jpg') ? $rawFoto : asset('images/carlos.png');
     @endphp
 
     {{-- Navbar superior --}}
@@ -235,7 +235,9 @@
                         <h2 class="mb-6 text-sm font-serif font-semibold text-[#ebe2d6] uppercase">Contacto</h2>
                         <ul class="text-brand-cream/70">
                             <li class="mb-4 text-[#ebe2d6] font-serif"><a href="mailto:red-ivo@solutions.com" class="hover:underline">red-ivo@solutions.com</a></li>
-                            <li class="mb-4 text-[#ebe2d6] font-serif"><a href="{{ url('/sucursal') }}" class="hover:underline text-[#ebe2d6]">Sucursales</a></li>
+                            @if ($esAdmin)
+                                <li class="mb-4 text-[#ebe2d6] font-serif"><a href="{{ url('/sucursal') }}" class="hover:underline text-[#ebe2d6]">Sucursales</a></li>
+                            @endif
                             <li class="mb-4 text-[#ebe2d6] font-serif"><a href="#" class="hover:underline text-[#ebe2d6]">Politica de privacidad</a></li>
                         </ul>
                     </div>

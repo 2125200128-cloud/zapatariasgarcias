@@ -124,6 +124,7 @@ document.addEventListener("DOMContentLoaded", () => {
                         if (grupo.chofer) {
                             grupo.chofer.setLatLng([t.posicion.lat, t.posicion.lng]);
                             grupo.chofer.setPopupContent(popup);
+                            grupo.chofer.setIcon(iconoPunto(color, '🚚'));
                         } else {
                             grupo.chofer = L.marker([t.posicion.lat, t.posicion.lng], { icon: iconoPunto(color, '🚚') })
                                 .addTo(mapa)

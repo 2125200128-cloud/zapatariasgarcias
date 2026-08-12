@@ -45,10 +45,11 @@
                     $fotoRaw = data_get($sucursal, 'imagen') ?? data_get($sucursal, 'foto');
                     $fotoUrl = $fotoRaw ? (str_starts_with($fotoRaw, 'http') ? $fotoRaw : asset($fotoRaw)) : asset('images/sucursal-placeholder.jpg');
 
-                    // Encargado asignado
-                    $encargado = data_get($sucursal, 'encargado.nombre') 
-                                ?? data_get($sucursal, 'encargado') 
-                                ?? 'Sin asignar';
+                    // Encargado asignado — la API lo manda bajo la relación
+                    // 'empleado', no 'encargado' (por eso siempre salía "Sin
+                    // asignar" aunque la sucursal sí tuviera encargado).
+                    $encargado = trim(data_get($sucursal, 'empleado.nombre', '') . ' ' . data_get($sucursal, 'empleado.apellido_paterno', ''));
+                    $encargado = $encargado !== '' ? $encargado : 'Sin asignar';
 
                     // Paquete de datos para el Modal
                     $datosModal = [

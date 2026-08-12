@@ -119,7 +119,7 @@
 
                     $nombreSucursal = data_get($pedido, 'sucursal.nombre', '—');
                     $fechaPedido    = data_get($pedido, 'fecha', '—');
-                    $numProductos   = count(data_get($pedido, 'detallePedidos', []));
+                    $numProductos   = count(data_get($pedido, 'detalle_pedidos', []));
                     $estatusPedido  = data_get($pedido, 'estatus', 'Pendiente');
                     $estatusTrayecto = data_get($trayecto, 'estatus', null);
 
