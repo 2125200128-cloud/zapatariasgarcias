@@ -35,7 +35,7 @@
                 <option value="">-- Selecciona --</option>
                 @foreach ($empleados ?? [] as $empleado)
                     <option value="{{ data_get($empleado, 'id', '') }}" {{ old('empleado_id') == data_get($empleado, 'id', '') ? 'selected' : '' }}>
-                        {{ data_get($empleado, 'nombre', 'Empleado') }} {{ data_get($empleado, 'apellido_paterno', '') }}
+                        {{ data_get($empleado, 'nombre', 'Empleado') }} {{ data_get($empleado, 'apellido_paterno', 'Empleado') }}
                     </option>
                 @endforeach
             </select>

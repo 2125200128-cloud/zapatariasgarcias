@@ -67,11 +67,6 @@
             <input type="text" name="codigo_postal" maxlength="5" value="{{ old('codigo_postal') }}" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" required>
         </div>
 
-        <div class="sm:col-span-2">
-            <label class="block text-sm font-medium text-gray-700 mb-1">Imagen</label>
-            <input type="file" name="imagen" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
-        </div>
-
         <div class="sm:col-span-2 flex justify-end gap-3">
             <a href="{{ url('/proveedor') }}" class="rounded-lg border border-gray-300 px-4 py-2 text-sm text-gray-600 hover:bg-gray-50">Cancelar</a>
             <button type="submit" class="bg-blue-600 text-white px-5 py-2 rounded-lg text-sm hover:bg-blue-700">Guardar</button>

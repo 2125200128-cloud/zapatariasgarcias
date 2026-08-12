@@ -1,16 +1,19 @@
-@extends('/plantilla/base')
+@extends('plantilla.base')
 
 @section('dinamico')
 
-<div class="relative rounded-lg shadow m-2 overflow-hidden h-75 bg-cover bg-center bg-no-repeat"
+{{-- Banner Principal (Se corrigió h-75 por h-72 o h-80) --}}
+<div class="relative rounded-lg shadow m-2 overflow-hidden h-72 bg-cover bg-center bg-no-repeat"
      style="background-image: url('{{ asset('images/zapatera.png') }}')">
 
     <div class="relative h-full flex items-center px-10">
         <div>
             <h2 class="text-3xl font-serif text-[#17181d]">Bienvenido a</h2>
             <h2 class="text-6xl font-serif text-[#17181d]">Hermanos García</h2>
-            <p class="text-2xl font-serif text-[#af7442] mt-4">Dejando huellas juntos</p>
-            <p class="text-1xl font-serif text-[#17181d] mt-4">Controla y supervisa las operaciones de tu negocio en tiepo real</p>
+
+            <p class="text-2xl font-serif text-[#af7442] mt-4">{{ data_get($apiUser, 'nombre', 'Usuario') }}</p>
+            <p class="text-1xl font-brand text-[#17181d] mt-4">Controla y supervisa las operaciones de tu negocio en tiempo real</p>
+
         </div>
     </div>
 </div>
@@ -19,12 +22,13 @@
     <h4>Resumen del Día</h4>
 </div>
 
+{{-- KPIs (Se corrigieron w-13/h-13 por w-12/h-12 o w-14/h-14) --}}
 <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
 
     @if ($esMatrizOAdmin)
         <div class="bg-brand-brown/90 p-5 rounded-lg shadow m-1 border border-[#af7442] flex items-center gap-3">
             <a href="{{ url('/sucursal') }}">
-                <img src="{{ asset('images/sucursal.png') }}" alt="Sucursales" class="w-13 h-13 m-2">
+                <img src="{{ asset('images/sucursal.png') }}" alt="Sucursales" class="w-12 h-12 m-2 object-contain">
             </a>
             <div>
                 <p class="text-sm text-[#381e0a] font-serif">Sucursales activas</p>
@@ -34,7 +38,7 @@
 
         <div class="bg-brand-brown/90 p-5 rounded-lg shadow m-1 border border-[#af7442] flex items-center gap-3">
             <a href="{{ url('/pedido/pendientes') }}">
-                <img src="{{ asset('images/pedidos.png') }}" alt="Pedidos" class="w-13 h-13 m-2">    
+                <img src="{{ asset('images/pedidos.png') }}" alt="Pedidos" class="w-12 h-12 m-2 object-contain">    
             </a>
             <div>
                 <p class="text-sm text-[#381e0a] font-serif">Pedidos pendientes</p>
@@ -44,7 +48,7 @@
 
         <div class="bg-brand-brown/90 p-5 rounded-lg shadow m-1 border border-[#af7442] flex items-center gap-3">
             <a href="{{ url('/producto') }}">
-                <img src="{{ asset('images/products.png') }}" alt="Productos" class="w-13 h-13 m-2">
+                <img src="{{ asset('images/products.png') }}" alt="Productos" class="w-12 h-12 m-2 object-contain">
             </a>
             <div>
                 <p class="text-sm text-[#381e0a] font-serif">Productos activos</p>
@@ -54,7 +58,7 @@
 
         <div class="bg-brand-brown/90 p-5 rounded-lg shadow m-1 border border-[#af7442] flex items-center gap-3">
             <a href="{{ url('/chofer') }}">
-                <img src="{{ asset('images/choferes.png') }}" alt="Choferes" class="w-14 h-14 m-2">
+                <img src="{{ asset('images/choferes.png') }}" alt="Choferes" class="w-14 h-14 m-2 object-contain">
             </a>    
             <div>
                 <p class="text-sm text-[#381e0a] font-serif">Choferes activos</p>
@@ -166,7 +170,7 @@ document.addEventListener("DOMContentLoaded", () => {
         ticks: { padding: 8 },
     };
 
-    // ---- Pedidos por sucursal / Mis pedidos por mes ----
+    // 1. Pedidos por sucursal / Mis pedidos por mes
     new Chart(document.getElementById('graficoSucursales'), {
         type: 'bar',
         data: {
@@ -189,13 +193,16 @@ document.addEventListener("DOMContentLoaded", () => {
         },
     });
 
-    // ---- Productos más solicitados ----
+    // 2. Productos más solicitados (Protegido contra null con ternario)
+    const productosLabels = @json($topProductos ? $topProductos->pluck('nombre') : []);
+    const productosDatos = @json($topProductos ? $topProductos->pluck('total') : []);
+
     new Chart(document.getElementById('graficoProductos'), {
         type: 'bar',
         data: {
-            labels: @json($topProductos?->pluck('nombre') ?? []),
+            labels: productosLabels,
             datasets: [{
-                data: @json($topProductos?->pluck('total') ?? []),
+                data: productosDatos,
                 backgroundColor: '#b4977d',
                 ...marcaBarra,
             }],
@@ -212,7 +219,7 @@ document.addEventListener("DOMContentLoaded", () => {
         },
     });
 
-    // ---- Pedidos por estatus ----
+    // 3. Pedidos por estatus
     const coloresEstatus = { Pendiente: '#CC6B22', Realizado: '#4B633B', Cancelado: '#80453E' };
     const datosEstatus = @json($pedidosPorEstatus ?? []);
 

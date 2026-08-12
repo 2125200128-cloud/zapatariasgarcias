@@ -62,29 +62,64 @@ class ZapatariaApiClient
     }
 
     protected function request(string $method, string $path, array $data = [], ?string $token = null): array
-    {
-        $request = Http::acceptJson()->baseUrl($this->baseUrl);
+{
+    $request = Http::acceptJson()->baseUrl($this->baseUrl);
 
-        if ($token) {
-            $request = $request->withToken($token);
-        }
-
-        $response = $request->{$method}($path, $data);
-
-        if (!$response->successful()) {
-            $payload = $response->json() ?? [];
-            $message = $payload['message'] ?? null;
-            if (!$message && isset($payload['errors'])) {
-                $message = collect($payload['errors'])
-                    ->flatten()
-                    ->filter(fn ($item) => is_string($item) && $item !== '')
-                    ->implode(' ');
-            }
-
-            $message = $message ?: 'No fue posible completar la petición en la API.';
-            throw new RuntimeException($message);
-        }
-
-        return $response->json() ?? [];
+    if ($token) {
+        $request = $request->withToken($token);
     }
+
+    // 1. Detectar si hay algún archivo subido en el array $data
+    $hasFiles = false;
+    foreach ($data as $value) {
+        if ($value instanceof \Illuminate\Http\UploadedFile) {
+            $hasFiles = true;
+            break;
+        }
+    }
+
+    // 2. Si hay archivos, los enviamos como multipart/form-data
+    if ($hasFiles) {
+        // PHP no lee archivos en peticiones HTTP PUT directas.
+        // Si el método es PUT y lleva archivo, enviamos por POST con _method = PUT (Method Spoofing).
+        if (strtolower($method) === 'put') {
+            $method = 'post';
+            $data['_method'] = 'PUT';
+        }
+
+        // Adjuntamos cada archivo encontrado
+        foreach ($data as $key => $value) {
+            if ($value instanceof \Illuminate\Http\UploadedFile) {
+                $request->attach(
+                    $key,
+                    file_get_contents($value->getPathname()),
+                    $value->getClientOriginalName()
+                );
+                unset($data[$key]); // Lo quitamos del array plano para no duplicarlo
+            }
+        }
+
+        // Ejecutamos la petición POST multipart
+        $response = $request->post($path, $data);
+    } else {
+        // Petición normal JSON sin archivos
+        $response = $request->{$method}($path, $data);
+    }
+
+    if (!$response->successful()) {
+        $payload = $response->json() ?? [];
+        $message = $payload['message'] ?? null;
+        if (!$message && isset($payload['errors'])) {
+            $message = collect($payload['errors'])
+                ->flatten()
+                ->filter(fn ($item) => is_string($item) && $item !== '')
+                ->implode(' ');
+        }
+
+        $message = $message ?: 'No fue posible completar la petición en la API.';
+        throw new RuntimeException($message);
+    }
+
+    return $response->json() ?? [];
+}
 }

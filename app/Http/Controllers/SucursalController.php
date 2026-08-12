@@ -53,8 +53,9 @@ class SucursalController extends ApiFrontController
         }
 
         $sucursal = $this->normalizePayload($payload['sucursal'] ?? null);
+        $empleados = $this->normalizeCollection($payload['empleados'] ?? []);
 
-        return view('sucursal/edicion', compact('sucursal'));
+        return view('sucursal/edicion', compact('sucursal', 'empleados'));
     }
 
     public function actualizar(Request $request, string $id)

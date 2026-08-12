@@ -74,7 +74,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     function actualizar() {
-        fetch('{{ url('/trayecto/flota/ubicaciones')}}', { headers: { 'Accept': 'application/json' } })
+        fetch("{{ url('/trayecto/flota/ubicaciones')}}", { headers: { 'Accept': 'application/json' } })
             .then(res => res.json())
             .then(trayectos => {
                 document.getElementById('mapaFlotaVacio').classList.toggle('hidden', trayectos.length > 0);
