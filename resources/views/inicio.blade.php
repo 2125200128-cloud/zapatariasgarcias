@@ -9,8 +9,8 @@
         <div>
             <h2 class="text-3xl font-serif text-[#17181d]">Bienvenido a</h2>
             <h2 class="text-6xl font-serif text-[#17181d]">Hermanos García</h2>
-            <p class="text-2xl font-serif text-[#af7442] mt-4">Administrador</p>
-            <p class="text-1xl font-brand text-[#17181d] mt-4">Controla y supervisa las operaciones de tu negocio en tiepo real</p>
+            <p class="text-2xl font-serif text-[#af7442] mt-4">Dejando huellas juntos</p>
+            <p class="text-1xl font-serif text-[#17181d] mt-4">Controla y supervisa las operaciones de tu negocio en tiepo real</p>
         </div>
     </div>
 </div>

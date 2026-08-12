@@ -10,7 +10,7 @@
         </a>
         <div>
             <h1 class="text-4xl font-serif text-[#17181d]">Pedidos</h1>
-            <p class="font-serif text-[#715b49]">Gestiona y supervisa los pedidos realizados en las sucursales</p>
+            <p class="font-serif text-[#715b49]">Gestiona y supervisa los pedidos realizados en tiempo real</p>
         </div>
     </div>
     <div class="flex items-center gap-3">
@@ -34,7 +34,7 @@
                 </div>
                 <input type="text" name="busqueda" id="busqueda" value="{{ request('busqueda') }}"
                     class="ps-9 px-3 py-2 bg-white border border-brand-brown/20 rounded-lg text-[#17181d] text-sm focus:ring-2 focus:ring-brand-brown focus:border-brand-brown block w-full placeholder:text-gray-400"
-                    placeholder="Buscar sucursal...">
+                    placeholder="Buscar sucursal por ID o nombre...">
             </div>
         </div>
 
@@ -57,7 +57,7 @@
 
         <div class="flex gap-2">
             <button type="submit"
-                class="inline-flex items-center justify-center bg-brand-brown hover:bg-brand-brown-dark text-white px-4 py-2 rounded-lg text-sm font-semibold">
+                class="inline-flex items-center justify-center bg-brand-caramel hover:bg-brand-caramel-dark text-white px-4 py-2 rounded-lg text-sm font-semibold">
                 Filtrar
             </button>
             @if (request('busqueda') || request('fecha') || request('estatus'))
@@ -106,7 +106,7 @@
                                 <li>
                                     {{ data_get($detalle, 'producto.nombre', '—') }}
                                     ({{ data_get($detalle, 'producto.talla', '—') }})
-                                    × {{ data_get($detalle, 'cantidad_solicitada', '—') }}
+                                    {{ data_get($detalle, 'cantidad_solicitada', '—') }}
                                 </li>
                             @empty
                                 <li class="text-gray-400 italic">Sin productos</li>

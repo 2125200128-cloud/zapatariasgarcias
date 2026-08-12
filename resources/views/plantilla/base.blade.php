@@ -192,23 +192,23 @@
                 <div class="mb-6 md:mb-0">
                      <a href="{{ url('/') }}" class="flex flex-col items-center md:items-start">
                         <img src="{{ asset('images/Logo-blanco.png') }}" class="h-25  p-1" alt="HG Logo" />
-                        <span class="font-script text-2xl mt-1 text-[#ebe2d6]">Calzado que deja huella</span>
+                        <span class="font-serif mt-1 text-[#ebe2d6]">El arte de caminar con estilo</span>
                     </a>
                 </div>
                 <div class="grid grid-cols-2 gap-8 sm:gap-6 sm:grid-cols-2">
                     <div>
-                        <h2 class="mb-6 text-sm font-semibold text-[#ebe2d6] uppercase">Navegación</h2>
+                        <h2 class="mb-6 text-sm font-serif font-semibold text-[#ebe2d6] uppercase">Navegación</h2>
                         <ul class="text-brand-cream/70">
-                            <li class="mb-4 text-[#ebe2d6]"><a href="{{ url('/pedido') }}" class="hover:underline">Pedidos</a></li>
-                            <li class="font-serif m-2 mt-2"><a href="{{ url('/inventario') }}" class="hover:underline text-[#ebe2d6]">Inventario</a></li>
+                            <li class="font-serif mb-4 text-[#ebe2d6]"><a href="{{ url('/pedido') }}" class="hover:underline">Pedidos</a></li>
+                            <li class="font-serif mb-4 text-[#ebe2d6]"><a href="{{ url('/inventario') }}" class="hover:underline text-[#ebe2d6]">Inventario</a></li>
                         </ul>
                     </div>
                     <div>
                         <h2 class="mb-6 text-sm font-semibold text-[#ebe2d6] uppercase">Contacto</h2>
                         <ul class="text-brand-cream/70">
-                            <li class="mb-4 text-[#ebe2d6]"><a href="mailto:red-ivo@solutions.com" class="hover:underline">red-ivo@solutions.com</a></li>
-                            <li class="mb-4 text-[#ebe2d6]"><a href="#" class="hover:underline text-[#ebe2d6]">Sucursales</a></li>
-                            <li class="mb-4 text-[#ebe2d6]"><a href="#" class="hover:underline text-[#ebe2d6]">Politica de privacidad</a></li>
+                            <li class="mb-4 text-[#ebe2d6] font-serif"><a href="mailto:red-ivo@solutions.com" class="hover:underline">red-ivo@solutions.com</a></li>
+                            <li class="mb-4 text-[#ebe2d6] font-serif"><a href="{{ url('/sucursal') }}" class="hover:underline text-[#ebe2d6]">Sucursales</a></li>
+                            <li class="mb-4 text-[#ebe2d6] font-serif"><a href="#" class="hover:underline text-[#ebe2d6]">Politica de privacidad</a></li>
                         </ul>
                     </div>
                 </div>
