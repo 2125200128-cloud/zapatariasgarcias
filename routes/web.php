@@ -18,6 +18,13 @@ use App\Http\Controllers\ProveedorController;
 Route::get('/login', [LoginController::class, 'mostrar'])->name('login');
 Route::post('/login', [LoginController::class, 'login']);
 
+// Fuera de api.auth a propósito: la abre el chofer, que no tiene cuenta ni
+// sesión — el link que le llega ya viene firmado (ver "Enviar ubicación al
+// chofer" en trayecto/lista.blade.php), Laravel valida la firma solo.
+Route::get('/trayecto/{id}/compartir', [TrayectoController::class, 'compartir'])
+    ->name('trayecto.compartir')
+    ->middleware('signed');
+
 Route::middleware(['api.auth'])->group(function () {
     // Inicio y logout
     Route::post('/logout', [LoginController::class, 'logout']);
@@ -113,7 +120,6 @@ Route::middleware(['api.auth'])->group(function () {
     Route::post('/trayecto/{id}/confirmar-llegada', [TrayectoController::class, 'confirmarLlegada']);
 
     // Extras de trayectos
-    Route::get('/trayecto/{id}/compartir', [TrayectoController::class, 'compartir']);
     Route::get('/trayecto/flota', [TrayectoController::class, 'flota']);
     Route::get('/trayecto/flota/ubicaciones', [TrayectoController::class, 'ubicaciones']);
 
@@ -121,6 +127,8 @@ Route::middleware(['api.auth'])->group(function () {
     Route::get('/inventario', [InventarioController::class, 'inicio']);
     Route::get('/inventario/formulario', [InventarioController::class, 'formulario']);
     Route::post('/inventario/guardar', [InventarioController::class, 'guardar']);
+    Route::get('/inventario/reabastecer', [InventarioController::class, 'formularioReabastecer']);
+    Route::post('/inventario/reabastecer', [InventarioController::class, 'reabastecer']);
     Route::get('/inventario/editar/{id}', [InventarioController::class, 'editar']);
     Route::post('/inventario/actualizar/{id}', [InventarioController::class, 'actualizar']);
     Route::get('/inventario/mostrar/{id}', [InventarioController::class, 'mostrar']);

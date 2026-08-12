@@ -33,6 +33,24 @@ class ZapatariaApiClient
         return $this->request('get', $path, [], $token);
     }
 
+    // Para endpoints server-to-server que no dependen de la sesión de un
+    // empleado (ej. el chofer abriendo su link de compartir ubicación, que
+    // no tiene cuenta) — autentica con el secreto compartido en vez de un
+    // Bearer token.
+    public function getConSecreto(string $path): array
+    {
+        $response = Http::acceptJson()
+            ->withHeaders(['X-Internal-Secret' => config('services.internal_share.secret')])
+            ->baseUrl($this->baseUrl)
+            ->get($path);
+
+        if (!$response->successful()) {
+            throw new RuntimeException($response->json('message') ?: 'No fue posible completar la petición en la API.');
+        }
+
+        return $response->json() ?? [];
+    }
+
     public function post(string $path, array $data = [], ?string $token = null): array
     {
         return $this->request('post', $path, $data, $token);

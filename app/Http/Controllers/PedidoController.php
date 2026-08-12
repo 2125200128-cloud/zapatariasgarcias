@@ -37,7 +37,40 @@ class PedidoController extends ApiFrontController
         return $pedidos->map(fn ($pedido) => $this->inyectarSucursal($pedido));
     }
 
-    public function inicio()
+    // Filtro de la barra de búsqueda de /pedido y /pedido/pendientes. Se
+    // aplica en el front sobre la colección ya traída de la API (son pocos
+    // pedidos en este caso de estudio, no justifica mandar los filtros a la
+    // API todavía).
+    private function filtrarPedidos(Collection $pedidos, Request $request): Collection
+    {
+        $busqueda = trim((string) $request->query('busqueda', ''));
+        $fecha = (string) $request->query('fecha', '');
+        $estatus = (string) $request->query('estatus', '');
+
+        return $pedidos->filter(function ($pedido) use ($busqueda, $fecha, $estatus) {
+            if ($busqueda !== '') {
+                $id = (string) data_get($pedido, 'id', '');
+                $nombreSucursal = (string) data_get($pedido, 'sucursal.nombre', '');
+                $coincide = str_contains($id, $busqueda)
+                    || str_contains(mb_strtolower($nombreSucursal), mb_strtolower($busqueda));
+                if (!$coincide) {
+                    return false;
+                }
+            }
+
+            if ($fecha !== '' && !str_starts_with((string) data_get($pedido, 'fecha', ''), $fecha)) {
+                return false;
+            }
+
+            if ($estatus !== '' && data_get($pedido, 'estatus') !== $estatus) {
+                return false;
+            }
+
+            return true;
+        })->values();
+    }
+
+    public function inicio(Request $request)
     {
         try {
             $payload = $this->client()->get('/api/pedidos', $this->token());
@@ -48,6 +81,8 @@ class PedidoController extends ApiFrontController
         $pedidos = $this->inyectarSucursalEnColeccion(
             $this->normalizeCollection($payload['pedidos'] ?? [])
         );
+
+        $pedidos = $this->filtrarPedidos($pedidos, $request);
 
         return view('pedido/inicio', compact('pedidos'));
     }
@@ -67,8 +102,12 @@ class PedidoController extends ApiFrontController
         // como array asociativo tal cual (sin normalizePayload) porque
         // formulario.blade.php lo indexa con $stockMatriz[$id] ?? 0.
         $stockMatriz = $payload['stockMatriz'] ?? [];
+        // Nombres únicos para el selector de producto del formulario — cada
+        // talla vive como un producto/id distinto, pero se elige una vez por
+        // nombre y las tallas se muestran aparte (ver formulario.blade.php).
+        $nombresProductos = $productos->pluck('nombre')->filter()->unique()->sort()->values();
 
-        return view('pedido/formulario', compact('sucursales', 'productos', 'sucursalFija', 'stockMatriz'));
+        return view('pedido/formulario', compact('sucursales', 'productos', 'sucursalFija', 'stockMatriz', 'nombresProductos'));
     }
 
     public function guardar(Request $request)
@@ -153,7 +192,7 @@ class PedidoController extends ApiFrontController
         return redirect('/pedido')->with('success', $payload['message'] ?? 'Pedido cancelado correctamente.');
     }
 
-    public function pendientes()
+    public function pendientes(Request $request)
     {
         try {
             $payload = $this->client()->get('/api/pedidos/pending', $this->token());
@@ -164,6 +203,8 @@ class PedidoController extends ApiFrontController
         $pedidos = $this->inyectarSucursalEnColeccion(
             $this->normalizeCollection($payload['pedidos'] ?? [])
         );
+
+        $pedidos = $this->filtrarPedidos($pedidos, $request);
 
         return view('pedido/pendientes', compact('pedidos'));
     }

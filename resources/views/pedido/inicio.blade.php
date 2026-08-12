@@ -3,14 +3,14 @@
 @section('dinamico')
 
 {{-- Título de página / Imagen y Nombre --}}
-<div class="flex flex-wrap items-center justify-between gap-4 mb-6">
+<div class="flex flex-wrap items-center justify-between gap-2 mb-10 mt-4 px-4">
     <div class="flex items-center gap-4">
         <a href="{{ url('/') }}" class="shrink-0 transition-transform hover:scale-105">
-            <img src="{{ asset('images/pedidos-formulario.png') }}" alt="Inicio-pedidos" class="w-16 h-16 object-contain">
+            <img src="{{ asset('images/pedidos-formulario.png') }}" alt="Inicio-pedidos" class="w-18 h-18 object-contain">
         </a>
         <div>
-            <h1 class="text-3xl font-serif text-[#17181d] font-bold">Pedidos</h1>
-            <p class="font-serif text-[#715b49] text-sm">Gestiona y supervisa los pedidos realizados en las sucursales</p>
+            <h1 class="text-4xl font-serif text-[#17181d] px-4">Pedidos</h1>
+            <p class="font-serif text-[#715b49] px-4">Gestiona y supervisa los pedidos realizados en tiempo real</p>
         </div>
     </div>
     
@@ -119,7 +119,7 @@
 
                     $nombreSucursal = data_get($pedido, 'sucursal.nombre', '—');
                     $fechaPedido    = data_get($pedido, 'fecha', '—');
-                    $numProductos   = count(data_get($pedido, 'detallePedidos', []));
+                    $numProductos   = count(data_get($pedido, 'detalle_pedidos', []));
                     $estatusPedido  = data_get($pedido, 'estatus', 'Pendiente');
                     $estatusTrayecto = data_get($trayecto, 'estatus', null);
 

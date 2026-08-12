@@ -7,6 +7,9 @@
     <div class="flex items-center gap-3">
         <span class="text-sm text-gray-500">{{ count($inventarios ?? []) }} registros</span>
         @if ($puedeGestionar ?? false)
+            <a href="{{ url('/inventario/reabastecer') }}" class="border border-gray-300 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors">
+                Reabastecer
+            </a>
             <a href="{{ url('/inventario/formulario') }}" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors shadow-sm">
                 Nuevo registro
             </a>
@@ -25,6 +28,47 @@
         {{ $errors->first() }}
     </div>
 @endif
+
+<form method="GET" action="{{ url('/inventario') }}" class="bg-white rounded-xl shadow-sm border border-gray-200/80 p-4 mb-4">
+    <div class="flex flex-wrap items-end gap-3">
+        <div class="flex-1 min-w-[220px]">
+            <label for="busqueda" class="block text-xs font-semibold text-[#3d3228] mb-1">Producto</label>
+            <div class="relative">
+                <div class="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none">
+                    <svg class="w-4 h-4 text-[#715b49]/60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m21 21-3.5-3.5M17 10a7 7 0 1 1-14 0 7 7 0 0 1 14 0Z"/>
+                    </svg>
+                </div>
+                <input type="text" name="busqueda" id="busqueda" value="{{ request('busqueda') }}"
+                    class="ps-9 px-3 py-2 bg-white border border-[#715b49]/20 rounded-lg text-[#17181d] text-sm focus:ring-2 focus:ring-[#715b49] focus:border-[#715b49] block w-full placeholder:text-gray-400 shadow-sm"
+                    placeholder="Buscar por nombre, marca o talla...">
+            </div>
+        </div>
+
+        <div class="min-w-[160px]">
+            <label for="estatus" class="block text-xs font-semibold text-[#3d3228] mb-1">Estatus</label>
+            <select name="estatus" id="estatus"
+                class="px-3 py-2 bg-white border border-[#715b49]/20 rounded-lg text-[#17181d] text-sm focus:ring-2 focus:ring-[#715b49] focus:border-[#715b49] block w-full shadow-sm">
+                <option value="">Todos</option>
+                <option value="Activo" @selected(request('estatus') === 'Activo')>Activo</option>
+                <option value="Inactivo" @selected(request('estatus') === 'Inactivo')>Inactivo</option>
+            </select>
+        </div>
+
+        <div class="flex gap-2">
+            <button type="submit"
+                class="inline-flex items-center justify-center bg-[#715b49] hover:bg-[#3d3228] text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors shadow-sm">
+                Filtrar
+            </button>
+            @if (request('busqueda') || request('estatus'))
+                <a href="{{ url('/inventario') }}"
+                    class="inline-flex items-center justify-center border border-[#715b49]/30 text-[#715b49] hover:bg-[#715b49]/10 px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+                    Limpiar
+                </a>
+            @endif
+        </div>
+    </div>
+</form>
 
 {{-- Tabla Principal --}}
 <div class="bg-white rounded-lg shadow-sm overflow-x-auto border border-gray-100">

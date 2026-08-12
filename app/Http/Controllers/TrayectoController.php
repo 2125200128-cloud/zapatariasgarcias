@@ -118,12 +118,15 @@ class TrayectoController extends ApiFrontController
         return redirect('/trayecto/lista')->with('success', $payload['message'] ?? 'Trayecto cancelado correctamente.');
     }
 
+    // Sin sesión a propósito (ruta pública firmada, ver routes/web.php) —
+    // la abre el chofer, que no tiene cuenta. Por eso llama a la API con el
+    // secreto compartido en vez de $this->token().
     public function compartir(string $id)
     {
         try {
-            $payload = $this->client()->get("/api/trayectos/{$id}/share", $this->token());
+            $payload = $this->client()->getConSecreto("/api/trayectos/{$id}/share");
         } catch (RuntimeException $exception) {
-            return redirect('/trayecto/lista')->withErrors(['trayecto' => $exception->getMessage()]);
+            abort(404, $exception->getMessage());
         }
 
         $trayecto = $this->normalizePayload($payload['trayecto'] ?? null);

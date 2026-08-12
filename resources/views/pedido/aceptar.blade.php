@@ -30,7 +30,7 @@
             </tr>
         </thead>
         <tbody class="divide-y divide-gray-100">
-            @forelse (data_get($pedido, 'detallePedidos', []) as $detalle)
+            @forelse (data_get($pedido, 'detalle_pedidos', []) as $detalle)
                 <tr>
                     <td class="px-3 py-2">{{ data_get($detalle, 'producto.nombre', '—') }}</td>
                     <td class="px-3 py-2">{{ data_get($detalle, 'producto.talla', '—') }}</td>

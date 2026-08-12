@@ -6,7 +6,6 @@
     <div class="mb-6 flex items-center justify-between">
         <div>
             <h1 class="text-2xl font-semibold text-gray-800">Editar marca</h1>
-            <p class="text-sm text-gray-500">Actualiza la información de la marca en la API.</p>
         </div>
         <a href="{{ url('/marca') }}" class="rounded-lg border border-gray-300 px-4 py-2 text-sm text-gray-600 hover:bg-gray-50">Volver</a>
     </div>

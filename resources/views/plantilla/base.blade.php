@@ -17,9 +17,7 @@
 </head>
 
 <body class="bg-brand-beige dark:bg-gray-1000 transition-colors duration-200 flex flex-col min-h-screen">
-
-
-
+    
     @php
         $userName = trim((string) ($apiUser['nombre'] ?? '') . ' ' . (string) ($apiUser['apellido_paterno'] ?? ''));
         if ($userName === '') {
@@ -29,7 +27,7 @@
 
         // Toma la URL de Cloudinary enviada por la API
         $rawFoto = $apiUser['foto'] ?? $apiUser['imagen'] ?? null;
-        $userFoto = !empty($rawFoto) ? $rawFoto : asset('images/carlos.png');
+        $userFoto = (!empty($rawFoto) && $rawFoto !== 'sin-imagen.jpg') ? $rawFoto : asset('images/carlos.png');
     @endphp
 
     {{-- Navbar superior --}}
@@ -171,51 +169,11 @@
     </aside>
 
     <div id="layoutContainer" class="flex-1 flex flex-col mt-20 transition-all duration-300">
-    {{-- Contenido dinámico --}}
-    <main id="mainContent" class="p-4 mt-20 flex-1 transition-all duration-300">
-        @yield('dinamico')
-    </main>
-
-    <footer class="p-4 bg-brand-dark/90 sm:p-6">
-        <div class="mx-auto max-w-screen-xl">
-            <div class="md:flex md:justify-between">
-                <div class="mb-6 md:mb-0">
-                    <a href="{{ url('/') }}" class="flex flex-col items-center md:items-start">
-                        <img src="{{ asset('images/Logo-blanco.png') }}" class="h-25 p-1" alt="HG Logo" />
-                        <span class="font-script text-2xl mt-1 text-[#ebe2d6]">Calzado que deja huella</span>
-                    </a>
-                </div>
-                <div class="grid grid-cols-2 gap-8 sm:gap-6 sm:grid-cols-2">
-                    <div>
-                        <h2 class="mb-6 text-sm font-semibold text-[#ebe2d6] uppercase">Navegación</h2>
-                        <ul class="text-brand-cream/70">
-                            <li class="mb-4 text-[#ebe2d6]"><a href="{{ url('/pedido') }}"
-                                    class="hover:underline">Pedidos</a></li>
-                            <li class="font-serif m-2 mt-2"><a href="{{ url('/inventario') }}"
-                                    class="hover:underline text-[#ebe2d6]">Inventario</a></li>
-                        </ul>
-                    </div>
-                    <div>
-                        <h2 class="mb-6 text-sm font-semibold text-[#ebe2d6] uppercase">Contacto</h2>
-                        <ul class="text-brand-cream/70">
-                            <li class="mb-4 text-[#ebe2d6]"><a href="mailto:red-ivo@solutions.com"
-                                    class="hover:underline">red-ivo@solutions.com</a></li>
-                            <li class="mb-4 text-[#ebe2d6]"><a href="#"
-                                    class="hover:underline text-[#ebe2d6]">Sucursales</a></li>
-                            <li class="mb-4 text-[#ebe2d6]"><a href="#" class="hover:underline text-[#ebe2d6]">Politica
-                                    de privacidad</a></li>
-                        </ul>
-                    </div>
-                </div>
-            </div>
-            <hr class="my-6 border-brand-cream/20 lg:my-8" />
-            <div class="sm:flex sm:items-center sm:justify-between">
-                <span class="text-sm text-brand-cream/70 sm:text-center text-[#ebe2d6]">© {{ date('Y') }} Zapatería
-                    Hermanos García. Todos los derechos reservados.</span>
-            </div>
-        </div>
-    </footer>
-</div>
+        {{-- Contenido dinámico --}}
+        <main id="mainContent" class="p-4 mt-5 flex-1 transition-all duration-300">
+            @yield('dinamico')
+        </main>
+    </div>
 
    <script>
         const toggleBtn = document.getElementById('toggleSidebar');
@@ -255,6 +213,42 @@
             localStorage.setItem('tema', html.classList.contains('dark') ? 'oscuro' : 'claro');
         });
     </script>
+
+    <footer class="p-4 bg-brand-dark/90 sm:p-6">
+        <div class="mx-auto max-w-screen-xl">
+            <div class="md:flex md:justify-between">
+                <div class="mb-6 md:mb-0">
+                     <a href="{{ url('/') }}" class="flex flex-col items-center md:items-start">
+                        <img src="{{ asset('images/Logo-blanco.png') }}" class="h-25  p-1" alt="HG Logo" />
+                        <span class="font-serif mt-1 text-[#ebe2d6]">El arte de caminar con estilo</span>
+                    </a>
+                </div>
+                <div class="grid grid-cols-2 gap-8 sm:gap-6 sm:grid-cols-2">
+                    <div>
+                        <h2 class="mb-6 text-sm font-serif font-semibold text-[#ebe2d6] uppercase">Navegación</h2>
+                        <ul class="text-brand-cream/70">
+                            <li class="font-serif mb-4 text-[#ebe2d6]"><a href="{{ url('/pedido') }}" class="hover:underline">Pedidos</a></li>
+                            <li class="font-serif mb-4 text-[#ebe2d6]"><a href="{{ url('/inventario') }}" class="hover:underline text-[#ebe2d6]">Inventario</a></li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h2 class="mb-6 text-sm font-serif font-semibold text-[#ebe2d6] uppercase">Contacto</h2>
+                        <ul class="text-brand-cream/70">
+                            <li class="mb-4 text-[#ebe2d6] font-serif"><a href="mailto:red-ivo@solutions.com" class="hover:underline">red-ivo@solutions.com</a></li>
+                            @if ($esAdmin)
+                                <li class="mb-4 text-[#ebe2d6] font-serif"><a href="{{ url('/sucursal') }}" class="hover:underline text-[#ebe2d6]">Sucursales</a></li>
+                            @endif
+                            <li class="mb-4 text-[#ebe2d6] font-serif"><a href="#" class="hover:underline text-[#ebe2d6]">Politica de privacidad</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <hr class="my-6 border-brand-cream/20 lg:my-8" />
+            <div class="sm:flex sm:items-center sm:justify-between">
+                <span class="text-sm text-brand-cream/70 sm:text-center text-[#ebe2d6]">© {{ date('Y') }} Zapatería Hermanos García. Todos los derechos reservados.</span>
+            </div>
+        </div>
+    </footer>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.2.1/flowbite.min.js"></script>
 

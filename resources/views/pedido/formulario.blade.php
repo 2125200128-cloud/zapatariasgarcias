@@ -6,7 +6,6 @@
     <div class="mb-6 flex items-center justify-between">
         <div>
             <h1 class="text-2xl font-semibold text-gray-800">Nuevo pedido</h1>
-            <p class="text-sm text-gray-500">Registra un nuevo pedido en la API de ZAPATERIA_API.</p>
         </div>
         <a href="{{ url('/pedido') }}" class="rounded-lg border border-gray-300 px-4 py-2 text-sm text-gray-600 hover:bg-gray-50">Volver</a>
     </div>
@@ -45,22 +44,24 @@
 
         <h2 class="text-sm font-semibold text-gray-700 mb-2">Productos solicitados</h2>
 
-        <div id="filasProductos" class="space-y-2 mb-2">
-            <div class="fila-producto flex gap-2">
-                <select name="producto_id[]" class="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm">
-                    <option value="">-- Producto --</option>
-                    @foreach ($productos ?? [] as $producto)
-                        <option value="{{ data_get($producto, 'id', '') }}">
-                            {{ data_get($producto, 'nombre', 'Producto') }} ({{ data_get($producto, 'talla', '—') }}) — disponible: {{ $stockMatriz[data_get($producto, 'id', '')] ?? 0 }}
-                        </option>
-                    @endforeach
-                </select>
-                <input type="number" name="cantidad[]" min="1" placeholder="Cantidad" class="w-32 border border-gray-300 rounded-lg px-3 py-2 text-sm">
-                <button type="button" class="quitar-fila px-3 rounded-lg border border-gray-300 text-gray-500 hover:bg-gray-50">×</button>
-            </div>
+        <div class="mb-4">
+            <label class="block text-sm font-medium text-gray-700 mb-1">Producto</label>
+            <select id="selectorProducto" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
+                <option value="">-- Elige un producto --</option>
+                @foreach ($nombresProductos ?? [] as $nombre)
+                    <option value="{{ $nombre }}">{{ $nombre }}</option>
+                @endforeach
+            </select>
         </div>
 
-        <button type="button" id="agregarProducto" class="text-blue-600 text-sm hover:underline mb-6">+ Agregar producto</button>
+        <div id="tallasProducto" class="mb-4 hidden">
+            <label class="block text-sm font-medium text-gray-700 mb-1">Talla</label>
+            <div id="chipsTallas" class="flex flex-wrap gap-2"></div>
+        </div>
+
+        <div id="carritoVacio" class="text-sm text-gray-400 italic mb-4">Todavía no has agregado ningún producto.</div>
+
+        <div id="filasCarrito" class="space-y-2 mb-6"></div>
 
         <p class="text-xs text-gray-500 mb-4">
             Un encargado de la matriz revisará este pedido, lo aceptará y asignará chofer y unidad para la entrega.
@@ -75,25 +76,115 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', () => {
-    const contenedor = document.getElementById('filasProductos');
+    // Catálogo agrupado por nombre de producto, cada uno con sus tallas y
+    // disponibilidad en matriz — así el selector de arriba solo lista
+    // productos (no una fila por cada talla).
+    const stockMatriz = @json($stockMatriz ?? []);
+    const productos = @json($productos ?? []);
 
-    function activarQuitar(fila) {
-        fila.querySelector('.quitar-fila').addEventListener('click', () => {
-            if (contenedor.querySelectorAll('.fila-producto').length > 1) {
-                fila.remove();
-            }
+    const porNombre = {};
+    productos.forEach((p) => {
+        const nombre = p.nombre || 'Producto';
+        if (!porNombre[nombre]) porNombre[nombre] = [];
+        porNombre[nombre].push({
+            id: p.id,
+            talla: p.talla ?? '—',
+            disponible: stockMatriz[p.id] ?? 0,
+        });
+    });
+
+    const selectorProducto = document.getElementById('selectorProducto');
+    const bloqueTallas = document.getElementById('tallasProducto');
+    const chipsTallas = document.getElementById('chipsTallas');
+    const filasCarrito = document.getElementById('filasCarrito');
+    const carritoVacio = document.getElementById('carritoVacio');
+
+    // producto_id -> { nombre, talla, disponible, cantidad }
+    const carrito = {};
+
+    function renderCarrito() {
+        filasCarrito.innerHTML = '';
+        const ids = Object.keys(carrito);
+        carritoVacio.classList.toggle('hidden', ids.length > 0);
+
+        ids.forEach((id) => {
+            const item = carrito[id];
+            const fila = document.createElement('div');
+            fila.className = 'flex items-center gap-2 border border-gray-200 rounded-lg px-3 py-2';
+            fila.innerHTML = `
+                <span class="flex-1 text-sm text-gray-700">${item.nombre} <span class="text-gray-400">— talla ${item.talla}</span></span>
+                <input type="hidden" name="producto_id[]" value="${id}">
+                <input type="number" name="cantidad[]" min="1" max="${item.disponible}" value="${item.cantidad}"
+                    class="w-24 border border-gray-300 rounded-lg px-2 py-1.5 text-sm cantidad-carrito" data-id="${id}">
+                <button type="button" class="quitar-carrito px-3 rounded-lg border border-gray-300 text-gray-500 hover:bg-gray-50" data-id="${id}">×</button>
+            `;
+            filasCarrito.appendChild(fila);
+        });
+
+        filasCarrito.querySelectorAll('.cantidad-carrito').forEach((input) => {
+            input.addEventListener('input', () => {
+                carrito[input.dataset.id].cantidad = input.value;
+            });
+        });
+
+        filasCarrito.querySelectorAll('.quitar-carrito').forEach((boton) => {
+            boton.addEventListener('click', () => {
+                delete carrito[boton.dataset.id];
+                renderCarrito();
+                renderChips();
+            });
         });
     }
 
-    contenedor.querySelectorAll('.fila-producto').forEach(activarQuitar);
+    function renderChips() {
+        const nombre = selectorProducto.value;
+        chipsTallas.innerHTML = '';
+        bloqueTallas.classList.toggle('hidden', !nombre);
+        if (!nombre) return;
 
-    document.getElementById('agregarProducto').addEventListener('click', () => {
-        const primera = contenedor.querySelector('.fila-producto');
-        const nueva = primera.cloneNode(true);
-        nueva.querySelectorAll('select, input').forEach(el => el.value = '');
-        activarQuitar(nueva);
-        contenedor.appendChild(nueva);
-    });
+        (porNombre[nombre] || []).forEach((variante) => {
+            const sinStock = Number(variante.disponible) <= 0;
+            const seleccionada = !!carrito[variante.id];
+
+            const chip = document.createElement('button');
+            chip.type = 'button';
+            chip.textContent = `${variante.talla}${sinStock ? ' · sin stock' : ''}`;
+            chip.disabled = sinStock;
+
+            let clases = 'px-3 py-1.5 rounded-lg text-sm border ';
+            if (sinStock) {
+                clases += 'border-gray-200 bg-gray-50 text-gray-300 cursor-not-allowed line-through';
+            } else if (seleccionada) {
+                clases += 'border-blue-600 bg-blue-600 text-white';
+            } else {
+                clases += 'border-gray-300 text-gray-700 hover:border-blue-400 hover:bg-blue-50';
+            }
+            chip.className = clases;
+
+            if (!sinStock) {
+                chip.addEventListener('click', () => {
+                    if (carrito[variante.id]) {
+                        delete carrito[variante.id];
+                    } else {
+                        carrito[variante.id] = {
+                            nombre,
+                            talla: variante.talla,
+                            disponible: variante.disponible,
+                            cantidad: 1,
+                        };
+                    }
+                    renderCarrito();
+                    renderChips();
+                });
+            }
+
+            chipsTallas.appendChild(chip);
+        });
+    }
+
+    selectorProducto.addEventListener('change', renderChips);
+
+    renderCarrito();
 });
 </script>
 

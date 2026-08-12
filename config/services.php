@@ -35,4 +35,11 @@ return [
         ],
     ],
 
+    // Secreto compartido con ZAPATERIA_API para llamar a
+    // /api/trayectos/{id}/share sin un token de empleado — lo usa
+    // TrayectoController::compartir() cuando el chofer abre su link.
+    'internal_share' => [
+        'secret' => env('INTERNAL_SHARE_SECRET'),
+    ],
+
 ];
