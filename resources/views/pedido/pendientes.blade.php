@@ -2,16 +2,17 @@
 
 @section('dinamico')
 
-<div class="flex items-center justify-between mb-6">
-    <div class="flex items-center gap-3">
+<div class="flex flex-wrap items-center justify-between gap-2 mb-10 mt-4 px-4">
+    <div class="flex items-center gap-4">
         <a href="{{ url('/') }}">
-            <img src="{{ asset('images/pendientes-formulario.png') }}" alt="Pedidos-pendientes" class="w-20 h-20 m-6">
+            <img src="{{ asset('images/pendientes-formulario.png') }}" alt="Pedidos-pendientes" class="w-18 h-18 object-contain">
         </a>
         <div class="mt-2">
-            <h1 class="text-4xl font-serif text-[#17181d]">Pedidos pendientes de aceptar</h1>
-            <p class="font-serif text-[#715b49]">Gestiona y supervisa tus pedidos pendientes en tiempo real</p>
+            <h1 class="text-4xl font-serif text-[#17181d] px-4">Pedidos pendientes de aceptar</h1>
+            <p class="font-serif text-[#715b49] px-4">Gestiona y supervisa tus pedidos pendientes en tiempo real</p>
         </div>
     </div>
+    
     <div class="flex items-center gap-3">
         <a href="{{ url('/pedido') }}" class="bg-brand-black-coffe text-white px-4 py-2 rounded-lg text-sm hover:bg-brand-brown-dark font-semibold">
             Ver todos los pedidos
