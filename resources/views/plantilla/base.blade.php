@@ -31,8 +31,7 @@
     @endphp
 
     {{-- Navbar superior --}}
-    <nav
-        class="fixed top-0 z-50 w-full bg-brand-dark/93 backdrop-blur-sm dark:bg-gray-800 border-b border-brand-brown/20 dark:border-gray-700">
+    <nav class="fixed top-0 z-50 w-full bg-brand-dark/93 backdrop-blur-sm dark:bg-gray-800 border-b border-brand-brown/20 dark:border-gray-700">
         <div class="px-3 py-3 lg:px-5 lg:pl-3 flex items-center justify-between">
             <div class="flex items-center">
                 <button id="toggleSidebar" type="button"
@@ -48,15 +47,8 @@
                 </a>
             </div>
 
+            {{-- Avatar y Menú de Usuario --}}
             <div class="flex items-center gap-2">
-                {{-- Switch de modo oscuro --}}
-                <button id="toggleDarkMode" type="button"
-                    class="p-2 text-sm rounded-lg text-brand-brown dark:text-brand-cream hover:bg-brand-brown/10 dark:hover:bg-white/10">
-                    <span id="iconoSol" class="hidden dark:inline">☀️</span>
-                    <span id="iconoLuna" class="inline dark:hidden">🌙</span>
-                </button>
-
-                {{-- Avatar y Menú de Usuario --}}
                 <button type="button" class="flex text-sm rounded-full focus:ring-2 focus:ring-brand-brown/30"
                     data-dropdown-toggle="dropdown-user">
                     <img class="w-10 h-10 rounded-full object-cover" src="{{ $userFoto }}" alt="{{ $userName }}">
@@ -83,6 +75,8 @@
                     </ul>
                 </div>
             </div>
+            {{-- Avatar y Menú de Usuario - FIN --}}
+
         </div>
     </nav>
 
@@ -238,7 +232,7 @@
                             @if ($esAdmin)
                                 <li class="mb-4 text-[#ebe2d6] font-serif"><a href="{{ url('/sucursal') }}" class="hover:underline text-[#ebe2d6]">Sucursales</a></li>
                             @endif
-                            <li class="mb-4 text-[#ebe2d6] font-serif"><a href="#" class="hover:underline text-[#ebe2d6]">Politica de privacidad</a></li>
+                            <li class="mb-4 text-[#ebe2d6] font-serif"><a href="{{ url('/politica') }}" class="hover:underline text-[#ebe2d6]">Politica de privacidad</a></li>
                         </ul>
                     </div>
                 </div>

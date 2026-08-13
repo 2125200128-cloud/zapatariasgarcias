@@ -2,10 +2,24 @@
 
 @section('dinamico')
 
-<div class="flex items-center gap-3 mb-6">
-    <h1 class="text-2xl font-serif text-[#17181d]">Mapa de flota — Trayectos activos</h1>
+{{-- Encabezado de la página --}}
+<div class="flex flex-wrap items-center justify-between gap-4 mb-15 mt-4 px-4">
+    <div class="flex items-center gap-4">
+        <a href="{{ url('/') }}" class="shrink-0 transition-transform hover:scale-105">
+            <img src="{{ asset('images/mapa.png') }}" alt="Mapa-de-flota" class="w-18 h-18 object-contain">
+        </a>
+        <div>
+            <h1 class="text-4xl font-serif text-[#17181d] px-4">Mapa de flota — Trayectos activos</h1>
+            <p class="font-serif text-brand-black-coffe px-4">Gestiona las rutas de los choferes</p>        
+        </div>
+    </div>
+
+        <a href="{{ url('/trayecto/lista') }}" class="bg-brand-black-coffe text-white px-4 py-2 rounded-lg text-sm hover:bg-brand-brown-dark font-semibold">
+        Regresar a ista de trayectos
+        </a>
 </div>
 
+{{-- colores de rutas --}}
 <div class="bg-white p-4 rounded-lg shadow mb-4 border border-brand-brown/10">
     <div class="flex flex-wrap gap-4 text-sm mb-3 text-[#3d3228]">
         <span class="flex items-center gap-1"><span class="inline-block w-3 h-3 rounded-full" style="background:#6b7280"></span> Pendiente</span>

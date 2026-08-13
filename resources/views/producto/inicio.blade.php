@@ -3,16 +3,22 @@
 @section('dinamico')
 
 {{-- Encabezado de la página --}}
-<div class="flex flex-wrap items-center justify-between gap-4 mb-6">
-    <div>
-        <h1 class="text-3xl font-serif text-[#17181d] font-bold">Productos</h1>
-        <p class="font-serif text-[#715b49] text-sm">Gestiona el catálogo de calzado y sus variantes por grupo</p>
+<div class="flex flex-wrap items-center justify-between gap-2 mb-10 mt-4 px-4">
+    <div class="flex items-center gap-4">
+        <a href="{{ url('/') }}" class="shrink-0 transition-transform hover:scale-105">
+            <img src="{{ asset('images/products-formulario.png') }}" alt="Inicio-productos" class="w-18 h-18 object-contain">
+        </a>
+        <div>
+            <h1 class="text-4xl font-serif text-[#17181d] px-4">Productos</h1>
+            <p class="font-serif text-brand-black-coffe px-4">Gestiona el catálogo de calzado y sus variantes por grupo</p>
+        </div>
     </div>
+
     <div class="flex items-center gap-3">
         <span class="text-sm font-medium text-[#3d3228] bg-gray-100 px-3 py-1.5 rounded-lg border border-gray-200">
             {{ count($grupos ?? []) }} grupos visibles
         </span>
-        <a href="{{ url('/producto/formulario') }}" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors shadow-sm">
+        <a href="{{ url('/producto/formulario') }}" class="bg-brand-black-coffe text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-brand-caramel transition-colors shadow-sm">
             + Nuevo producto
         </a>
     </div>
@@ -30,6 +36,7 @@
         {{ $errors->first() }}
     </div>
 @endif
+
 
 {{-- Tabla Principal --}}
 <div class="bg-white rounded-xl shadow-sm overflow-x-auto border border-gray-200/80">

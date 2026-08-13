@@ -2,14 +2,22 @@
 
 @section('dinamico')
 
-<div class="flex items-center justify-between mb-4">
-    <h1 class="text-2xl font-semibold text-gray-800">
-        {{ ($puedeGestionar ?? false) ? 'Lista de trayectos' : 'Mis trayectos' }}
-    </h1>
+{{-- Título de página / Imagen y Nombre --}}
+<div class="flex flex-wrap items-center justify-between gap-2 mb-10 mt-4 px-4">
+    <div class="flex items-center gap-4" class="shrink-0 transition-transform hover:scale-105">
+        <a href="{{ url('/') }}">
+            <img src="{{ asset('images/ruta.png') }}" alt="trayectos" class="w-18 h-18 object-contain">
+        </a>
+        <div>
+            <h1 class="text-4xl font-serif text-brand-dark px-4">Lista de Trayectos</h1>
+            <p class="font-serif text-[#715b49] px-4">Gestiona y supervisa tus rutas en tiempo real</p>
+        </div>
+    </div>
+
     <div class="flex items-center gap-3">
         <span class="text-sm text-gray-500">{{ count($trayectos ?? []) }} registros</span>
         @if ($puedeGestionar ?? false)
-            <a href="{{ url('/pedido/pendientes') }}" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors shadow-sm">
+            <a href="{{ url('/pedido/pendientes') }}" class="bg-brand-black-coffe text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-brand-caramel transition-colors shadow-sm">
                 Pedidos pendientes de aceptar
             </a>
         @endif
@@ -18,6 +26,7 @@
         </a>
     </div>
 </div>
+{{-- Título de página / Imagen y Nombre - FIN --}}
 
 @if (session('success'))
     <div class="mb-4 rounded-lg border border-green-200 bg-green-50 p-3 text-sm text-green-700">
@@ -30,6 +39,60 @@
         {{ $errors->first() }}
     </div>
 @endif
+
+{{-- Formulario de Buscador / Filtros --}}
+<form method="GET" action="{{ url('/producto') }}" class="bg-white rounded-xl shadow-sm border border-gray-200/80 p-4 mb-6">
+    <div class="flex flex-wrap items-end gap-3">
+
+        {{-- Filtro Marca --}}
+        <div class="flex-1 min-w-[220px]">
+            <label for="marca" class="block text-xs font-semibold text-[#3d3228] mb-1">Marca</label>
+            <div class="relative">
+                <div class="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none">
+                    <svg class="w-4 h-4 text-brand-black-coffe/60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m21 21-3.5-3.5M17 10a7 7 0 1 1-14 0 7 7 0 0 1 14 0Z"/>
+                    </svg>
+                </div>
+                <input type="text" name="marca" id="marca" value="{{ request('marca') }}"
+                    class="ps-9 px-3 py-2 bg-white border text-brand-black-coffe/60 rounded-lg text-[#17181d] text-sm focus:ring-2 focus:ring-[#715b49] focus:border-[#715b49] block w-full placeholder:text-gray-400 shadow-sm"
+                    placeholder="Buscar marca...">
+            </div>
+        </div>
+
+        {{-- Filtro Proveedor --}}
+        <div class="min-w-[160px]">
+            <label for="proveedor" class="block text-xs font-semibold text-[#3d3228] mb-1">Proveedor</label>
+            <input type="text" name="proveedor" id="proveedor" value="{{ request('proveedor') }}"
+                class="px-3 py-2 bg-white border text-brand-black-coffe/60 rounded-lg text-[#17181d] text-sm focus:ring-2 focus:ring-[#715b49] focus:border-[#715b49] block w-full placeholder:text-gray-400 shadow-sm"
+                placeholder="Buscar proveedor...">
+        </div>
+
+        {{-- Filtro Estatus --}}
+        <div class="min-w-[160px]">
+            <label for="estatus" class="block text-xs font-semibold text-[#3d3228] mb-1">Estatus</label>
+            <select name="estatus" id="estatus"
+                class="px-3 py-2 bg-white border border-brand-black-coffe/20 rounded-lg text-[#17181d] text-sm focus:ring-2 focus:ring-[#715b49] focus:border-[#715b49] block w-full shadow-sm">
+                <option value="">Todos</option>
+                <option value="Activo" @selected(request('estatus') === 'Activo')>Activo</option>
+                <option value="Agotado" @selected(request('estatus') === 'Agotado')>Agotado</option>
+            </select>
+        </div>
+
+        {{-- Botones Filtrar / Limpiar --}}
+        <div class="flex gap-2">
+            <button type="submit"
+                class="inline-flex items-center justify-center bg-brand-black-coffe hover:bg-[#3d3228] text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors shadow-sm">
+                Filtrar
+            </button>
+            @if (request('marca') || request('proveedor') || request('estatus'))
+                <a href="{{ url('/producto') }}"
+                    class="inline-flex items-center justify-center border border-brand-black-coffe/30 text-brand-black-coffe hover:bg-brand-black-coffe/10 px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+                    Limpiar
+                </a>
+            @endif
+        </div>
+    </div>
+</form>
 
 {{-- Tabla Principal --}}
 <div class="bg-white rounded-lg shadow-sm overflow-x-auto border border-gray-100">

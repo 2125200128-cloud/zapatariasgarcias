@@ -2,64 +2,72 @@
 
 @section('dinamico')
 
-<div class="max-w-3xl rounded-lg bg-white p-6 shadow">
-    <div class="mb-6 flex items-center justify-between">
-        <div>
-            <h1 class="text-2xl font-semibold text-gray-800">Nuevo registro de inventario</h1>
-            <p class="text-sm text-gray-500">Agrega stock al inventario de la matriz.</p>
-        </div>
-        <a href="{{ url('/inventario') }}" class="rounded-lg border border-gray-300 px-4 py-2 text-sm text-gray-600 hover:bg-gray-50">Volver</a>
+<div class="max-w-4xl mx-auto bg-cover bg-center p-8 rounded-lg" style="background-image: url('{{ asset('images/fondo-formulario.jpeg') }}')">
+    <div class="max-w-3xl rounded-lg bg-white p-6 shadow">
+
+        <form id="formInventario" action="{{ url('/inventario/guardar') }}" method="POST" class="grid gap-4 sm:grid-cols-2">
+            <div class="max-w-3xl rounded-lg bg-white p-6 shadow">
+                <div class="mb-6 flex items-center justify-between">
+                    <div>
+                        <h1 class="text-2xl font-semibold text-gray-800">Nuevo registro de inventario</h1>
+                        <p class="text-sm text-gray-500">Agrega stock al inventario de la matriz.</p>
+                    </div>
+                    <a href="{{ url('/inventario') }}" class="rounded-lg border border-gray-300 px-4 py-2 text-sm text-gray-600 hover:bg-gray-50">Volver</a>
+                </div>
+
+                @if ($errors->any())
+                    <div class="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+                        {{ $errors->first() }}
+                    </div>
+                @endif
+
+                <form id="formInventario" action="{{ url('/inventario/guardar') }}" method="POST" class="grid gap-4 sm:grid-cols-2">
+                    @csrf
+
+                    <div class="sm:col-span-2">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Sucursal</label>
+                        <input type="text" value="{{ data_get($matriz, 'nombre', 'Matriz') }}" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-gray-50" disabled>
+                        <p class="text-xs text-gray-400 mt-1">El inventario solo se captura a mano para la matriz — las sucursales reciben stock únicamente cuando se les entrega un pedido.</p>
+                    </div>
+
+                    <div class="sm:col-span-2">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Producto</label>
+                        <select id="selectorProducto" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
+                            <option value="">-- Elige un producto --</option>
+                            @foreach ($nombresProductos ?? [] as $nombre)
+                                <option value="{{ $nombre }}">{{ $nombre }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    <div id="tallasProducto" class="sm:col-span-2 hidden">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Talla</label>
+                        <div id="chipsTallas" class="flex flex-wrap gap-2"></div>
+                        <input type="hidden" name="producto_id" id="producto_id" value="{{ old('producto_id') }}" required>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Stock</label>
+                        <input type="number" name="stock" min="0" value="{{ old('stock') }}" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" required>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Estatus</label>
+                        <select name="estatus" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
+                            <option value="Activo" {{ old('estatus') === 'Activo' ? 'selected' : '' }}>Activo</option>
+                            <option value="Inactivo" {{ old('estatus') === 'Inactivo' ? 'selected' : '' }}>Inactivo</option>
+                        </select>
+                    </div>
+
+                    <div class="sm:col-span-2 flex justify-end gap-3">
+                        <a href="{{ url('/inventario') }}" class="rounded-lg border border-gray-300 px-4 py-2 text-sm text-gray-600 hover:bg-gray-50">Cancelar</a>
+                        <button type="submit" class="bg-blue-600 text-white px-5 py-2 rounded-lg text-sm hover:bg-blue-700">Guardar</button>
+                    </div>
+                </form>
+            </div>
+
+        </form>
     </div>
-
-    @if ($errors->any())
-        <div class="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
-            {{ $errors->first() }}
-        </div>
-    @endif
-
-    <form id="formInventario" action="{{ url('/inventario/guardar') }}" method="POST" class="grid gap-4 sm:grid-cols-2">
-        @csrf
-
-        <div class="sm:col-span-2">
-            <label class="block text-sm font-medium text-gray-700 mb-1">Sucursal</label>
-            <input type="text" value="{{ data_get($matriz, 'nombre', 'Matriz') }}" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-gray-50" disabled>
-            <p class="text-xs text-gray-400 mt-1">El inventario solo se captura a mano para la matriz — las sucursales reciben stock únicamente cuando se les entrega un pedido.</p>
-        </div>
-
-        <div class="sm:col-span-2">
-            <label class="block text-sm font-medium text-gray-700 mb-1">Producto</label>
-            <select id="selectorProducto" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
-                <option value="">-- Elige un producto --</option>
-                @foreach ($nombresProductos ?? [] as $nombre)
-                    <option value="{{ $nombre }}">{{ $nombre }}</option>
-                @endforeach
-            </select>
-        </div>
-
-        <div id="tallasProducto" class="sm:col-span-2 hidden">
-            <label class="block text-sm font-medium text-gray-700 mb-1">Talla</label>
-            <div id="chipsTallas" class="flex flex-wrap gap-2"></div>
-            <input type="hidden" name="producto_id" id="producto_id" value="{{ old('producto_id') }}" required>
-        </div>
-
-        <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Stock</label>
-            <input type="number" name="stock" min="0" value="{{ old('stock') }}" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" required>
-        </div>
-
-        <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Estatus</label>
-            <select name="estatus" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
-                <option value="Activo" {{ old('estatus') === 'Activo' ? 'selected' : '' }}>Activo</option>
-                <option value="Inactivo" {{ old('estatus') === 'Inactivo' ? 'selected' : '' }}>Inactivo</option>
-            </select>
-        </div>
-
-        <div class="sm:col-span-2 flex justify-end gap-3">
-            <a href="{{ url('/inventario') }}" class="rounded-lg border border-gray-300 px-4 py-2 text-sm text-gray-600 hover:bg-gray-50">Cancelar</a>
-            <button type="submit" class="bg-blue-600 text-white px-5 py-2 rounded-lg text-sm hover:bg-blue-700">Guardar</button>
-        </div>
-    </form>
 </div>
 
 <script>

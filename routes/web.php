@@ -133,4 +133,7 @@ Route::middleware(['api.auth'])->group(function () {
     Route::post('/inventario/actualizar/{id}', [InventarioController::class, 'actualizar']);
     Route::get('/inventario/mostrar/{id}', [InventarioController::class, 'mostrar']);
     Route::post('/inventario/eliminar/{id}', [InventarioController::class, 'eliminar']);
-});
+
+    Route::view('/politica', 'legal/politica');
+
+    });

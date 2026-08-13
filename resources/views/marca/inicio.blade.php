@@ -2,11 +2,21 @@
 
 @section('dinamico')
 
-<div class="flex items-center justify-between mb-4">
-    <h1 class="text-2xl font-semibold text-gray-800">Marcas</h1>
+{{-- Título de página / Imagen y Nombre --}}
+<div class="flex flex-wrap items-center justify-between gap-2 mb-10 mt-4 px-4">
+    <div class="flex items-center gap-4" class="shrink-0 transition-transform hover:scale-105">
+        <a href="{{ url('/') }}">
+            <img src="{{ asset('images/marca-inicio.png') }}" alt="marca-inicio" class="w-18 h-18 object-contain">
+        </a>
+        <div>
+            <h1 class="text-4xl font-serif text-brand-dark px-4">Marcas</h1>
+            <p class="font-serif text-[715b49] px-4">Gestiona tus marcas asociadas</p>
+        </div>
+    </div>
+
     <div class="flex items-center gap-3">
         <span class="text-sm text-gray-500">{{ count($marcas ?? []) }} marcas registradas</span>
-        <a href="{{ url('/marca/formulario') }}" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors shadow-sm">
+        <a href="{{ url('/marca/formulario') }}" class="bg-brand-black-coffe text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-brand-caramel transition-colors shadow-sm">
             Nueva marca
         </a>
     </div>

@@ -7,10 +7,15 @@ use RuntimeException;
 
 class ProductoController extends ApiFrontController
 {
-    public function inicio()
+    public function inicio(Request $request)
     {
+        // Reenviamos los filtros del formulario (Blade) tal cual hacia la
+        // API real — mismo patrón que usamos en PedidoController::inicio().
+        $filtros = array_filter($request->only(['marca', 'proveedor', 'estatus']));
+        $ruta = '/api/productos' . ($filtros ? '?' . http_build_query($filtros) : '');
+
         try {
-            $payload = $this->client()->get('/api/productos', $this->token());
+            $payload = $this->client()->get($ruta, $this->token());
         } catch (RuntimeException $exception) {
             return redirect('/login')->withErrors(['usuario' => $exception->getMessage()]);
         }

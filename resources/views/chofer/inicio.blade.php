@@ -2,8 +2,18 @@
 
 @section('dinamico')
 
+{{-- Título de página / Imagen y Nombre --}}
 <div class="flex items-center justify-between mb-4">
-    <h1 class="text-2xl font-semibold text-gray-800">Choferes</h1>
+    <div class="flex items-center gap-6" class="shrink-0 transition-transform hover:scale-105">
+        <a href="{{ url('/') }}">
+            <img src="{{ asset('images/choferes-inicio.png') }}" alt="Choferes-inicio" class="w-18 h-18 object-contain">
+        </a>
+        <div>
+            <h1 class="text-4xl font-serif text-brand-dark px-4">Choferes</h1>
+            <p class="font-serif text-[#715b49] px-4">Gestiona a tus conductores de manera práctico</p>
+        </div>
+    </div>
+
     <div class="flex items-center gap-3">
         <span class="text-sm text-gray-500">{{ count($choferes ?? []) }} choferes registrados</span>
         <a href="{{ url('/chofer/formulario') }}" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors shadow-sm">

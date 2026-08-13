@@ -2,20 +2,28 @@
 
 @section('dinamico')
 
-<div class="flex items-center justify-between mb-4">
-    <h1 class="text-2xl font-semibold text-gray-800">{{ ($puedeGestionar ?? false) ? 'Inventario' : 'Mi inventario' }}</h1>
+{{-- Título de página / Imagen y Nombre --}}
+<div class="flex flex-wrap items-center justify-between gap-2 mb-10 mt-4 px-4">
+    <div class="flex items-center gap-4" class="shrink-0 transition-transform hover:scale-105">
+        <a href="{{ url('/') }}">
+            <img src="{{ asset('images/inventario.png') }}" alt="inventario" class="w-18 h-18 object-contain">
+        </a>  
+        <div>
+            <h1 class="text-4xl font-serif text-brand-dark px-4">Inventario</h1>
+            <p class="font-serif text-[#715b49] px-4">Gestiona tus inventario de manera práctica</p>   
+        </div>    
+    </div>
+    
     <div class="flex items-center gap-3">
         <span class="text-sm text-gray-500">{{ count($inventarios ?? []) }} registros</span>
         @if ($puedeGestionar ?? false)
             <a href="{{ url('/inventario/reabastecer') }}" class="border border-gray-300 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors">
                 Reabastecer
             </a>
-            <a href="{{ url('/inventario/formulario') }}" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors shadow-sm">
-                Nuevo registro
-            </a>
         @endif
     </div>
 </div>
+{{-- Título de página / Imagen y Nombre - FIN --}}
 
 @if (session('success'))
     <div class="mb-4 rounded-lg border border-green-200 bg-green-50 p-3 text-sm text-green-700">

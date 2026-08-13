@@ -2,48 +2,57 @@
 
 @section('dinamico')
 
-<div class="max-w-3xl rounded-lg bg-white p-6 shadow">
-    <div class="mb-6 flex items-center justify-between">
-        <div>
-            <h1 class="text-2xl font-semibold text-gray-800">Reabastecer inventario</h1>
-            <p class="text-sm text-gray-500">Suma stock a varias tallas de la matriz de un jalón — ej. llegó un envío con varias tallas del mismo producto.</p>
-        </div>
-        <a href="{{ url('/inventario') }}" class="rounded-lg border border-gray-300 px-4 py-2 text-sm text-gray-600 hover:bg-gray-50">Volver</a>
+<div class="max-w-4xl mx-auto bg-cover bg-center p-8 rounded-lg" style="background-image: url('{{ asset('images/fondo-formulario.jpeg') }}')">
+    <div class="max-w-3xl rounded-lg bg-white p-6 shadow">
+
+        <form id="formInventario" action="{{ url('/inventario/guardar') }}" method="POST" class="grid gap-4 sm:grid-cols-2"></form>
+
+            <div class="max-w-3xl rounded-lg bg-white p-6 shadow">
+                <div class="mb-6 flex items-center justify-between">
+                    <div>
+                        <h1 class="text-2xl font-semibold text-gray-800">Reabastecer inventario</h1>
+                        <p class="text-sm text-gray-500">Suma stock a varias tallas de la matriz de un jalón — ej. llegó un envío con varias tallas del mismo producto.</p>
+                    </div>
+                    <a href="{{ url('/inventario') }}" class="rounded-lg border border-gray-300 px-4 py-2 text-sm text-gray-600 hover:bg-gray-50">Volver</a>
+                </div>
+
+                @if ($errors->any())
+                    <div class="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+                        {{ $errors->first() }}
+                    </div>
+                @endif
+
+                <form action="{{ url('/inventario/reabastecer') }}" method="POST">
+                    @csrf
+
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Producto</label>
+                        <select id="selectorProducto" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
+                            <option value="">-- Elige un producto --</option>
+                            @foreach ($nombresProductos ?? [] as $nombre)
+                                <option value="{{ $nombre }}">{{ $nombre }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    <div id="tallasProducto" class="mb-4 hidden">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Tallas a reabastecer</label>
+                        <div id="chipsTallas" class="flex flex-wrap gap-2"></div>
+                    </div>
+
+                    <div id="carritoVacio" class="text-sm text-gray-400 italic mb-4">Todavía no has agregado ninguna talla.</div>
+
+                    <div id="filasCarrito" class="space-y-2 mb-6"></div>
+
+                    <div class="flex justify-end gap-3">
+                        <a href="{{ url('/inventario') }}" class="rounded-lg border border-gray-300 px-4 py-2 text-sm text-gray-600 hover:bg-gray-50">Cancelar</a>
+                        <button type="submit" class="bg-blue-600 text-white px-5 py-2 rounded-lg text-sm hover:bg-blue-700">Guardar</button>
+                    </div>
+                </form>
+            </div>
+
+        </form>
     </div>
-
-    @if ($errors->any())
-        <div class="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
-            {{ $errors->first() }}
-        </div>
-    @endif
-
-    <form action="{{ url('/inventario/reabastecer') }}" method="POST">
-        @csrf
-
-        <div class="mb-4">
-            <label class="block text-sm font-medium text-gray-700 mb-1">Producto</label>
-            <select id="selectorProducto" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
-                <option value="">-- Elige un producto --</option>
-                @foreach ($nombresProductos ?? [] as $nombre)
-                    <option value="{{ $nombre }}">{{ $nombre }}</option>
-                @endforeach
-            </select>
-        </div>
-
-        <div id="tallasProducto" class="mb-4 hidden">
-            <label class="block text-sm font-medium text-gray-700 mb-1">Tallas a reabastecer</label>
-            <div id="chipsTallas" class="flex flex-wrap gap-2"></div>
-        </div>
-
-        <div id="carritoVacio" class="text-sm text-gray-400 italic mb-4">Todavía no has agregado ninguna talla.</div>
-
-        <div id="filasCarrito" class="space-y-2 mb-6"></div>
-
-        <div class="flex justify-end gap-3">
-            <a href="{{ url('/inventario') }}" class="rounded-lg border border-gray-300 px-4 py-2 text-sm text-gray-600 hover:bg-gray-50">Cancelar</a>
-            <button type="submit" class="bg-blue-600 text-white px-5 py-2 rounded-lg text-sm hover:bg-blue-700">Guardar</button>
-        </div>
-    </form>
 </div>
 
 <script>
